@@ -29,6 +29,7 @@ data class Participant(
 @Serializable
 data class Room(
     val id: String,
+    val name: String,
     val participants: MutableMap<String, Participant> = mutableMapOf(),
     var isRevealed: Boolean = false
 )

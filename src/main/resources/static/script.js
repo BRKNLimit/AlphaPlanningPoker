@@ -107,12 +107,13 @@ function joinRoom() {
     socket.onopen = () => {
         send({type: 'join', roomId});
         showScreen('game-screen');
-        document.getElementById('room-display').classList.remove('hidden');
-        document.getElementById('room-display').innerText = `ROOM: ${roomId.toUpperCase()}`;
+        document.getElementById('room-info').classList.remove('hidden');
     };
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        document.getElementById('room-name-display').innerText = data.name.toUpperCase();
+        document.getElementById('room-id-display').innerText = data.id;
         updateUI(data);
     };
 

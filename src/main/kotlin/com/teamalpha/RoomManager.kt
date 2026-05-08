@@ -9,21 +9,41 @@ import java.util.concurrent.CopyOnWriteArraySet
 import kotlinx.serialization.encodeToString
 
 class RoomManager {
-    private val rooms = ConcurrentHashMap<String, Room>()
+    private val rooms = ConcurrentHashMap<String, Room>() // ID to Room
+    private val nameToId = ConcurrentHashMap<String, String>() // Name to ID
     private val connections = ConcurrentHashMap<String, MutableSet<Connection>>()
 
-    suspend fun join(connection: Connection, roomId: String, name: String) {
-        val room = rooms.computeIfAbsent(roomId) { Room(it) }
+    suspend fun join(connection: Connection, roomNameOrId: String, username: String) {
+        // Find existing room by ID or Name
+        var room = rooms[roomNameOrId] ?: rooms[nameToId[roomNameOrId]]
+        
+        if (room == null) {
+            // Create new room
+            val id = generateUniqueId()
+            val name = if (roomNameOrId.startsWith("#")) "New Room" else roomNameOrId
+            room = Room(id, name)
+            rooms[id] = room
+            nameToId[name] = id
+        }
+
         val pId = UUID.randomUUID().toString()
         val isHost = room.participants.isEmpty()
-        val participant = Participant(pId, name, isHost = isHost)
+        val participant = Participant(pId, username, isHost = isHost)
         
         room.participants[pId] = participant
         connection.participantId = pId
-        connection.roomId = roomId
+        connection.roomId = room.id
         
-        connections.computeIfAbsent(roomId) { CopyOnWriteArraySet() }.add(connection)
-        broadcast(roomId)
+        connections.computeIfAbsent(room.id) { CopyOnWriteArraySet() }.add(connection)
+        broadcast(room.id)
+    }
+
+    private fun generateUniqueId(): String {
+        var id: String
+        do {
+            id = "#" + (1000..9999).random().toString()
+        } while (rooms.containsKey(id))
+        return id
     }
 
     suspend fun vote(roomId: String, pId: String, vote: String) {
@@ -55,6 +75,7 @@ class RoomManager {
         
         if (room.participants.isEmpty()) {
             rooms.remove(roomId)
+            nameToId.remove(room.name)
             connections.remove(roomId)
         } else {
             if (room.participants.values.none { it.isHost }) {
