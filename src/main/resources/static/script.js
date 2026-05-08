@@ -1,39 +1,114 @@
 let socket = null;
-let myId = null;
 let isHost = false;
+let isAdmin = false;
 
-const joinScreen = document.getElementById('join-screen');
-const gameScreen = document.getElementById('game-screen');
-const roomDisplay = document.getElementById('room-display');
-const participantsGrid = document.getElementById('participants');
-const hostControls = document.getElementById('host-controls');
-const cards = document.querySelectorAll('.card');
+const screens = ['login-screen', 'register-screen', 'join-screen', 'game-screen', 'admin-screen'];
 
-document.getElementById('join-btn').addEventListener('click', joinRoom);
+function showScreen(screenId) {
+    screens.forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+    });
+    document.getElementById(screenId).classList.remove('hidden');
+}
+
+// Auth Handlers
+document.getElementById('login-btn').addEventListener('click', async () => {
+    const username = document.getElementById('login-user').value;
+    const password = document.getElementById('login-pass').value;
+    
+    const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    
+    if (data.status === 'OK') {
+        isAdmin = data.isAdmin;
+        document.getElementById('user-display').innerText = username.toUpperCase();
+        if (isAdmin) document.getElementById('admin-panel-btn').classList.remove('hidden');
+        showScreen('join-screen');
+    } else if (data.status === 'PENDING') {
+        alert('WAITING FOR ADMIN APPROVAL');
+    } else {
+        alert('INVALID CREDENTIALS');
+    }
+});
+
+document.getElementById('reg-btn').addEventListener('click', async () => {
+    const username = document.getElementById('reg-user').value;
+    const password = document.getElementById('reg-pass').value;
+    
+    const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    
+    if (data.status === 'OK') {
+        alert('REGISTRATION SUCCESSFUL. WAIT FOR ADMIN APPROVAL.');
+        showScreen('login-screen');
+    } else {
+        alert('REGISTRATION FAILED');
+    }
+});
+
+// Admin Handlers
+document.getElementById('admin-panel-btn').addEventListener('click', loadAdminPanel);
+
+async function loadAdminPanel() {
+    showScreen('admin-screen');
+    const res = await fetch('/admin/users');
+    const users = await res.json();
+    
+    const list = document.getElementById('user-list');
+    list.innerHTML = '';
+    users.forEach(user => {
+        const item = document.createElement('div');
+        item.className = 'admin-user-item';
+        item.innerHTML = `
+            <span>${user.username} (${user.status})</span>
+            ${user.status === 'PENDING' ? `<button onclick="approveUser('${user.username}')">APPROVE</button>` : ''}
+        `;
+        list.appendChild(item);
+    });
+}
+
+async function approveUser(username) {
+    await fetch('/admin/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUsername: username })
+    });
+    loadAdminPanel();
+}
+
+// Game Handlers
+document.getElementById('enter-btn').addEventListener('click', joinRoom);
 document.getElementById('reveal-btn').addEventListener('click', () => send({type: 'reveal'}));
 document.getElementById('reset-btn').addEventListener('click', () => send({type: 'reset'}));
 
-cards.forEach(card => {
+document.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', () => {
         const value = card.dataset.value;
-        cards.forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         send({type: 'vote', vote: value});
     });
 });
 
 function joinRoom() {
-    const name = document.getElementById('name-input').value || 'Alpha';
     const roomId = document.getElementById('room-input').value || 'ALPHA';
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     socket = new WebSocket(`${protocol}//${window.location.host}/poker`);
 
     socket.onopen = () => {
-        send({type: 'join', roomId, name});
-        joinScreen.classList.add('hidden');
-        gameScreen.classList.remove('hidden');
-        roomDisplay.innerText = `ROOM: ${roomId.toUpperCase()}`;
+        send({type: 'join', roomId});
+        showScreen('game-screen');
+        document.getElementById('room-display').classList.remove('hidden');
+        document.getElementById('room-display').innerText = `ROOM: ${roomId.toUpperCase()}`;
     };
 
     socket.onmessage = (event) => {
@@ -54,12 +129,8 @@ function send(data) {
 }
 
 function updateUI(room) {
+    const participantsGrid = document.getElementById('participants');
     participantsGrid.innerHTML = '';
-    
-    // Check if I am host
-    // (Note: In a real app, the server would tell us our ID, but for this proto 
-    // we'll just check if any participant matches the name and has isHost=true)
-    // Actually, let's just use the first room update to find ourself if we don't know our ID.
     
     Object.values(room.participants).forEach(p => {
         const div = document.createElement('div');
@@ -81,24 +152,22 @@ function updateUI(room) {
         `;
         participantsGrid.appendChild(div);
 
-        // Simple host check based on name (improvement: server should send ID)
-        if (p.isHost && p.name === document.getElementById('name-input').value) {
+        if (p.isHost && p.name === document.getElementById('user-display').innerText) {
             isHost = true;
-            hostControls.classList.remove('hidden');
+            document.getElementById('host-controls').classList.remove('hidden');
         }
     });
 
     if (!room.isRevealed) {
-        // Reset local selection if room was reset
         if (Object.values(room.participants).every(p => !p.vote)) {
-            cards.forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
         }
     }
 }
 
-// Key shortcuts
+// Shortcuts
 window.addEventListener('keydown', (e) => {
-    if (gameScreen.classList.contains('hidden')) return;
+    if (document.getElementById('game-screen').classList.contains('hidden')) return;
 
     if (e.key >= '1' && e.key <= '9') {
         const values = ['1', '2', '3', '5', '8', '13', '21', '34', '55'];

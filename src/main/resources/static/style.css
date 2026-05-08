@@ -277,3 +277,27 @@ button:active {
 
 #reveal-btn { background-color: var(--primary); }
 #reset-btn { background-color: #333; }
+
+.admin-user-list {
+    text-align: left;
+    margin-top: 20px;
+}
+
+.admin-user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    font-size: 0.7rem;
+}
+
+.admin-user-item span {
+    flex: 1;
+}
+
+.admin-user-item button {
+    width: auto;
+    padding: 5px 10px;
+    font-size: 0.6rem;
+}

@@ -13,18 +13,54 @@
     
     <header>
         <div class="logo">TEAM ALPHA</div>
-        <div id="room-display" class="room-id">ROOM: ----</div>
+        <div id="room-display" class="room-id hidden">ROOM: ----</div>
+        <div id="user-display" class="room-id">LOGIN</div>
     </header>
 
-    <main id="join-screen">
+    <!-- Login Screen -->
+    <main id="login-screen">
         <div class="auth-box">
-            <h1>Join Session</h1>
-            <input type="text" id="name-input" placeholder="Your Name" maxlength="20">
-            <input type="text" id="room-input" placeholder="Room ID (e.g. ALPHA)" maxlength="10">
-            <button id="join-btn">ENTER ROOM</button>
+            <h1>Login</h1>
+            <input type="text" id="login-user" placeholder="Username" maxlength="20">
+            <input type="password" id="login-pass" placeholder="Password" maxlength="20">
+            <button id="login-btn">LOGIN</button>
+            <p style="margin-top:20px; font-size: 0.6rem; cursor:pointer;" onclick="showScreen('register-screen')">New? Register here</p>
         </div>
     </main>
 
+    <!-- Register Screen -->
+    <main id="register-screen" class="hidden">
+        <div class="auth-box">
+            <h1>Register</h1>
+            <input type="text" id="reg-user" placeholder="Username" maxlength="20">
+            <input type="password" id="reg-pass" placeholder="Password" maxlength="20">
+            <button id="reg-btn">REGISTER</button>
+            <p style="margin-top:20px; font-size: 0.6rem; cursor:pointer;" onclick="showScreen('login-screen')">Back to Login</p>
+        </div>
+    </main>
+
+    <!-- Join Screen (After Login) -->
+    <main id="join-screen" class="hidden">
+        <div class="auth-box">
+            <h1>Join Session</h1>
+            <input type="text" id="room-input" placeholder="Room ID (e.g. ALPHA)" maxlength="10">
+            <button id="enter-btn">ENTER ROOM</button>
+            <button id="admin-panel-btn" class="hidden" style="margin-top:10px; background:#333;">ADMIN PANEL</button>
+        </div>
+    </main>
+
+    <!-- Admin Panel -->
+    <main id="admin-screen" class="hidden">
+        <div class="auth-box" style="max-width: 800px;">
+            <h1>Admin Panel</h1>
+            <div id="user-list" class="admin-user-list">
+                <!-- Users here -->
+            </div>
+            <button onclick="showScreen('join-screen')" style="margin-top:20px;">BACK</button>
+        </div>
+    </main>
+
+    <!-- Game Screen -->
     <main id="game-screen" class="hidden">
         <div id="participants" class="participants-grid">
             <!-- Participants will be injected here -->
