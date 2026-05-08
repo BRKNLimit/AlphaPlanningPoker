@@ -20,8 +20,19 @@ class UserManager {
     }
 
     fun authenticate(username: String, passwordHash: String): User? {
-        val user = users[username.lowercase()] ?: return null
-        if (user.passwordHash == passwordHash) return user
+        val lower = username.lowercase().trim()
+        val pass = passwordHash.trim()
+        println("AUTH ATTEMPT: User='$username' (lower='$lower') Pass='$pass'")
+        val user = users[lower]
+        if (user == null) {
+            println("AUTH FAIL: User '$lower' not found in ${users.keys}")
+            return null
+        }
+        if (user.passwordHash == pass) {
+            println("AUTH SUCCESS: $lower")
+            return user
+        }
+        println("AUTH FAIL: Password mismatch for '$lower'. Expected '${user.passwordHash}' but got '$pass'")
         return null
     }
 

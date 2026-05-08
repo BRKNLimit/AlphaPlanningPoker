@@ -22,6 +22,7 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
         post("/login") {
             try {
                 val msg = call.receive<ClientMessage>()
+                println("LOGIN REQUEST RECEIVED: user='${msg.username}' pass='${msg.password}'")
                 val user = userManager.authenticate(msg.username ?: "", msg.password ?: "")
                 if (user != null) {
                     if (user.status == UserStatus.APPROVED) {
