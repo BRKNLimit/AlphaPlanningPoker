@@ -64,6 +64,9 @@ function updateUI(room) {
     Object.values(room.participants).forEach(p => {
         const div = document.createElement('div');
         div.className = `participant-card ${p.vote ? 'voted' : ''}`;
+        if (room.isRevealed && p.vote) {
+            div.classList.add('reveal-animation');
+        }
         
         let voteContent = '';
         if (room.isRevealed) {
