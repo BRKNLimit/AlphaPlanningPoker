@@ -9,17 +9,18 @@ class UserManager {
 
     init {
         // Seed Admin
-        users["Admin"] = User("Admin", "Admin1234", UserStatus.APPROVED, isAdmin = true)
+        users["admin"] = User("Admin", "Admin1234", UserStatus.APPROVED, isAdmin = true)
     }
 
     fun register(username: String, passwordHash: String): Boolean {
-        if (users.containsKey(username)) return false
-        users[username] = User(username, passwordHash, UserStatus.PENDING)
+        val lowerUser = username.lowercase()
+        if (users.containsKey(lowerUser)) return false
+        users[lowerUser] = User(username, passwordHash, UserStatus.PENDING)
         return true
     }
 
     fun authenticate(username: String, passwordHash: String): User? {
-        val user = users[username] ?: return null
+        val user = users[username.lowercase()] ?: return null
         if (user.passwordHash == passwordHash) return user
         return null
     }
@@ -29,11 +30,11 @@ class UserManager {
     }
 
     fun approveUser(username: String) {
-        users[username]?.status = UserStatus.APPROVED
+        users[username.lowercase()]?.status = UserStatus.APPROVED
     }
 
     fun rejectUser(username: String) {
-        users.remove(username)
+        users.remove(username.lowercase())
     }
 
     fun getAllUsers(): List<User> {

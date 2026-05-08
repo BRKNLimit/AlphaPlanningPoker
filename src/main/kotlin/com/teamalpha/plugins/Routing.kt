@@ -96,9 +96,3 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
         }
     }
 }
-
-// Utility extension to receive JSON as ClientMessage easily
-suspend inline fun <reified T : Any> io.ktor.server.application.ApplicationCall.receive(): T {
-    val text = receiveText()
-    return Json.decodeFromString(text)
-}
