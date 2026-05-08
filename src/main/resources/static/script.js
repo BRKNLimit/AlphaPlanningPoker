@@ -40,9 +40,9 @@ document.getElementById('login-btn').addEventListener('click', async () => {
         if (isAdmin) document.getElementById('admin-panel-btn').classList.remove('hidden');
         showScreen('join-screen');
     } else if (data.status === 'PENDING') {
-        alert('WAITING FOR ADMIN APPROVAL');
+        alert(data.message || 'WAITING FOR ADMIN APPROVAL');
     } else {
-        alert('INVALID CREDENTIALS');
+        alert(data.message || 'INVALID CREDENTIALS');
     }
 });
 

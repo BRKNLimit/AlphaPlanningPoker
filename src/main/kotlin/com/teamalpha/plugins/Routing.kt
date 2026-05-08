@@ -22,21 +22,21 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
         post("/login") {
             try {
                 val msg = call.receive<ClientMessage>()
-                println("LOGIN REQUEST RECEIVED: user='${msg.username}' pass='${msg.password}'")
+                println("LOGIN ATTEMPT: ${msg.username}")
                 val user = userManager.authenticate(msg.username ?: "", msg.password ?: "")
                 if (user != null) {
                     if (user.status == UserStatus.APPROVED) {
                         call.sessions.set(UserSession(user.username))
                         call.respond(mapOf("status" to "OK", "isAdmin" to user.isAdmin))
                     } else {
-                        call.respond(mapOf("status" to "PENDING"))
+                        call.respond(mapOf("status" to "PENDING", "message" to "User not yet approved by admin"))
                     }
                 } else {
-                    call.respond(mapOf("status" to "ERROR", "message" to "Invalid credentials"))
+                    call.respond(mapOf("status" to "ERROR", "message" to "Invalid username or password"))
                 }
             } catch (e: Exception) {
-                application.log.error("Login error", e)
-                call.respond(mapOf("status" to "ERROR", "message" to e.message))
+                println("LOGIN EXCEPTION: ${e.message}")
+                call.respond(mapOf("status" to "ERROR", "message" to "Server Error: ${e.message}"))
             }
         }
 
