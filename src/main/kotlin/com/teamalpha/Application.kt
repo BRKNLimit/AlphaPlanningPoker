@@ -3,6 +3,7 @@ package com.teamalpha
 import com.teamalpha.plugins.configureRouting
 import com.teamalpha.plugins.configureSockets
 import com.teamalpha.plugins.configureSecurity
+import com.teamalpha.plugins.configureSerialization
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -16,6 +17,7 @@ fun Application.module() {
     val roomManager = RoomManager()
     val userManager = UserManager()
     
+    configureSerialization()
     configureSecurity()
     configureSockets()
     configureRouting(roomManager, userManager)

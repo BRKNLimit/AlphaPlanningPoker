@@ -99,7 +99,7 @@ header {
 }
 
 /* --- Screens --- */
-#join-screen {
+#join-screen, #login-screen, #register-screen, #admin-screen {
     display: flex;
     justify-content: center;
     align-items: center;
