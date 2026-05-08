@@ -27,16 +27,16 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
                 if (user != null) {
                     if (user.status == UserStatus.APPROVED) {
                         call.sessions.set(UserSession(user.username))
-                        call.respond(mapOf("status" to "OK", "isAdmin" to user.isAdmin))
+                        call.respond(AuthResponse("OK", isAdmin = user.isAdmin))
                     } else {
-                        call.respond(mapOf("status" to "PENDING", "message" to "User not yet approved by admin"))
+                        call.respond(AuthResponse("PENDING", message = "User not yet approved by admin"))
                     }
                 } else {
-                    call.respond(mapOf("status" to "ERROR", "message" to "Invalid username or password"))
+                    call.respond(AuthResponse("ERROR", message = "Invalid username or password"))
                 }
             } catch (e: Exception) {
                 println("LOGIN EXCEPTION: ${e.message}")
-                call.respond(mapOf("status" to "ERROR", "message" to "Server Error: ${e.message}"))
+                call.respond(AuthResponse("ERROR", message = "Server Error: ${e.message}"))
             }
         }
 
@@ -45,13 +45,13 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
                 val msg = call.receive<ClientMessage>()
                 val success = userManager.register(msg.username ?: "", msg.password ?: "")
                 if (success) {
-                    call.respond(mapOf("status" to "OK"))
+                    call.respond(AuthResponse("OK"))
                 } else {
-                    call.respond(mapOf("status" to "ERROR", "message" to "User already exists"))
+                    call.respond(AuthResponse("ERROR", message = "User already exists"))
                 }
             } catch (e: Exception) {
                 application.log.error("Registration error", e)
-                call.respond(mapOf("status" to "ERROR", "message" to e.message))
+                call.respond(AuthResponse("ERROR", message = e.message))
             }
         }
 
@@ -62,7 +62,7 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
                 if (user?.isAdmin == true) {
                     call.respond(userManager.getAllUsers())
                 } else {
-                    call.respond(mapOf("error" to "Forbidden"))
+                    call.respond(AuthResponse("ERROR", message = "Forbidden"))
                 }
             }
 
@@ -72,9 +72,9 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
                 if (user?.isAdmin == true) {
                     val msg = call.receive<ClientMessage>()
                     userManager.approveUser(msg.targetUsername ?: "")
-                    call.respond(mapOf("status" to "OK"))
+                    call.respond(AuthResponse("OK"))
                 } else {
-                    call.respond(mapOf("status" to "Forbidden"))
+                    call.respond(AuthResponse("ERROR", message = "Forbidden"))
                 }
             }
 

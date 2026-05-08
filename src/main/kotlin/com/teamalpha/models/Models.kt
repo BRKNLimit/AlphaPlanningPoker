@@ -19,6 +19,13 @@ data class User(
 data class UserSession(val username: String) : Principal
 
 @Serializable
+data class AuthResponse(
+    val status: String,
+    val isAdmin: Boolean = false,
+    val message: String? = null
+)
+
+@Serializable
 data class Participant(
     val id: String,
     val name: String,
