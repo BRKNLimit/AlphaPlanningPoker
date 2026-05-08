@@ -20,27 +20,37 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
         staticResources("/", "static", index = "index.html")
 
         post("/login") {
-            val msg = call.receive<ClientMessage>()
-            val user = userManager.authenticate(msg.username ?: "", msg.password ?: "")
-            if (user != null) {
-                if (user.status == UserStatus.APPROVED) {
-                    call.sessions.set(UserSession(user.username))
-                    call.respond(mapOf("status" to "OK", "isAdmin" to user.isAdmin))
+            try {
+                val msg = call.receive<ClientMessage>()
+                val user = userManager.authenticate(msg.username ?: "", msg.password ?: "")
+                if (user != null) {
+                    if (user.status == UserStatus.APPROVED) {
+                        call.sessions.set(UserSession(user.username))
+                        call.respond(mapOf("status" to "OK", "isAdmin" to user.isAdmin))
+                    } else {
+                        call.respond(mapOf("status" to "PENDING"))
+                    }
                 } else {
-                    call.respond(mapOf("status" to "PENDING"))
+                    call.respond(mapOf("status" to "ERROR", "message" to "Invalid credentials"))
                 }
-            } else {
-                call.respond(mapOf("status" to "ERROR"))
+            } catch (e: Exception) {
+                application.log.error("Login error", e)
+                call.respond(mapOf("status" to "ERROR", "message" to e.message))
             }
         }
 
         post("/register") {
-            val msg = call.receive<ClientMessage>()
-            val success = userManager.register(msg.username ?: "", msg.password ?: "")
-            if (success) {
-                call.respond(mapOf("status" to "OK"))
-            } else {
-                call.respond(mapOf("status" to "ERROR"))
+            try {
+                val msg = call.receive<ClientMessage>()
+                val success = userManager.register(msg.username ?: "", msg.password ?: "")
+                if (success) {
+                    call.respond(mapOf("status" to "OK"))
+                } else {
+                    call.respond(mapOf("status" to "ERROR", "message" to "User already exists"))
+                }
+            } catch (e: Exception) {
+                application.log.error("Registration error", e)
+                call.respond(mapOf("status" to "ERROR", "message" to e.message))
             }
         }
 

@@ -41,7 +41,7 @@ data class Room(
 
 @Serializable
 data class ClientMessage(
-    val type: String,
+    val type: String? = null,
     val roomId: String? = null,
     val name: String? = null,
     val vote: String? = null,
