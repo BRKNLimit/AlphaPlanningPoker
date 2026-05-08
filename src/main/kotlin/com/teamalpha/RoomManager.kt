@@ -68,8 +68,10 @@ class RoomManager {
         val room = rooms[roomId] ?: return
         room.isRevealed = true
         
-        // Calculate consensus and payouts
-        val votes = room.participants.values.mapNotNull { it.vote }
+        // Calculate consensus and payouts (Exclude Hosts)
+        val voters = room.participants.values.filter { !it.isHost }
+        val votes = voters.mapNotNull { it.vote }
+        
         if (votes.isNotEmpty() && votes.all { it == votes[0] }) {
             room.consensusValue = votes[0]
             broadcastRaw(roomId, """{"type":"cleanSweep","value":"${votes[0]}"}""")
@@ -77,9 +79,9 @@ class RoomManager {
             room.consensusValue = null
         }
 
-        // Handle Gambling Payouts (simple version: most frequent vote wins)
+        // Handle Gambling Payouts (Exclude Hosts)
         val winningVote = votes.groupBy { it }.maxByOrNull { it.value.size }?.key
-        room.participants.values.forEach { p ->
+        voters.forEach { p ->
             if (p.vote == winningVote && winningVote != null) {
                 p.chips += p.currentWager * 2
             } else {

@@ -108,14 +108,19 @@ async function approveUser(username) {
 // Betting UI
 const wagerSlider = document.getElementById('wager-slider');
 const wagerAmount = document.getElementById('wager-amount');
-wagerSlider.addEventListener('input', () => {
-    wagerAmount.innerText = wagerSlider.value;
-});
+if (wagerSlider) {
+    wagerSlider.addEventListener('input', () => {
+        wagerAmount.innerText = wagerSlider.value;
+    });
+}
 
-document.getElementById('all-in-btn').addEventListener('click', () => {
-    wagerSlider.value = chips;
-    wagerAmount.innerText = chips;
-});
+const allInBtn = document.getElementById('all-in-btn');
+if (allInBtn) {
+    allInBtn.addEventListener('click', () => {
+        wagerSlider.value = chips;
+        wagerAmount.innerText = chips;
+    });
+}
 
 // Reactions
 document.querySelectorAll('.reaction-btn').forEach(btn => {
@@ -131,6 +136,7 @@ document.getElementById('reset-btn').addEventListener('click', () => send({type:
 
 document.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', () => {
+        if (isHost) return; // Host cannot vote
         const value = card.dataset.value;
         const wager = parseInt(wagerSlider.value);
         const isAllIn = (wager >= chips && chips > 0);
@@ -176,7 +182,7 @@ function joinRoom() {
     };
 
     socket.onclose = (e) => {
-        if (!gameScreen.classList.contains('hidden')) {
+        if (!document.getElementById('game-screen').classList.contains('hidden')) {
             alert('CONNECTION LOST');
             window.location.reload();
         }
@@ -195,7 +201,10 @@ function updateUI(room) {
     
     Object.values(room.participants).forEach(p => {
         const isMe = p.name === myUsername;
-        if (isMe) chips = p.chips; 
+        if (isMe) {
+            chips = p.chips;
+            isHost = p.isHost;
+        }
 
         const div = document.createElement('div');
         div.id = `participant-${p.id}`;
@@ -211,16 +220,29 @@ function updateUI(room) {
             voteContent = p.vote ? `<div class="vote-hidden"></div>` : `<div class="vote-value">-</div>`;
         }
         
+        // Hosts (Scrum Masters) have a special label and no chips/bet display
+        const nameLabel = p.isHost ? `${p.name} [MASTER] 👑` : p.name;
+        const betLabel = (!p.isHost && p.currentWager > 0) ? `BET: ${p.currentWager}` : '';
+
         div.innerHTML = `
-            ${voteContent}
-            <div class="participant-name">${p.name} ${p.isHost ? '👑' : ''}</div>
-            <div style="font-size:0.5rem; color:gold;">${p.currentWager > 0 ? 'BET: ' + p.currentWager : ''}</div>
+            ${p.isHost ? '<div class="vote-value" style="font-size:1rem; color:#666;">MASTER</div>' : voteContent}
+            <div class="participant-name">${nameLabel}</div>
+            <div style="font-size:0.5rem; color:gold;">${betLabel}</div>
         `;
         participantsGrid.appendChild(div);
 
-        if (p.isHost && isMe) {
-            isHost = true;
-            document.getElementById('host-controls').classList.remove('hidden');
+        if (isMe) {
+            if (isHost) {
+                document.getElementById('host-controls').classList.remove('hidden');
+                document.querySelector('.cards-container').classList.add('hidden');
+                document.querySelector('.betting-ui').classList.add('hidden');
+                document.getElementById('chips-display').classList.add('hidden');
+            } else {
+                document.getElementById('host-controls').classList.add('hidden');
+                document.querySelector('.cards-container').classList.remove('hidden');
+                document.querySelector('.betting-ui').classList.remove('hidden');
+                document.getElementById('chips-display').classList.remove('hidden');
+            }
         }
     });
 
