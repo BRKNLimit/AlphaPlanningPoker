@@ -17,8 +17,14 @@
             <div id="room-name-display" class="room-name">NAME</div>
             <div id="room-id-display" class="room-id">#0000</div>
         </div>
-        <div id="user-display" class="room-id">LOGIN</div>
+        <div class="header-right" style="display:flex; align-items:center; gap:20px;">
+            <div id="chips-display" class="room-id" style="color: gold;">CHIPS: 0</div>
+            <div id="user-display" class="room-id">LOGIN</div>
+        </div>
     </header>
+
+    <div id="animation-layer" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10000;"></div>
+    <div id="sweep-overlay" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:gold; text-shadow:0 0 20px gold; z-index:10001; text-align:center;">CLEAN ESTIMATE!<br>X1.5 MULT!</div>
 
     <!-- Login Screen -->
     <main id="login-screen">
@@ -65,8 +71,24 @@
 
     <!-- Game Screen -->
     <main id="game-screen" class="hidden">
+        <div class="reactions-bar" style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
+            <button class="reaction-btn" data-emoji="🤡" style="width:auto; padding:5px 10px;">🤡</button>
+            <button class="reaction-btn" data-emoji="💀" style="width:auto; padding:5px 10px;">💀</button>
+            <button class="reaction-btn" data-emoji="🔥" style="width:auto; padding:5px 10px;">🔥</button>
+            <button class="reaction-btn" data-emoji="☕" style="width:auto; padding:5px 10px;">☕</button>
+        </div>
+
         <div id="participants" class="participants-grid">
             <!-- Participants will be injected here -->
+        </div>
+
+        <div class="betting-ui" style="display:flex; flex-direction:column; align-items:center; gap:10px; margin:20px 0;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <label style="font-size:0.6rem;">WAGER:</label>
+                <input type="range" id="wager-slider" min="0" max="10" value="0" style="width:150px;">
+                <span id="wager-amount" style="font-size:0.6rem; color:gold;">0</span>
+            </div>
+            <button id="all-in-btn" style="width:auto; padding:10px 20px; font-size:0.6rem; background:#444;">ALL IN</button>
         </div>
 
         <div class="controls">

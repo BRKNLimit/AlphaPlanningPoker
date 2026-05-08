@@ -81,10 +81,11 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
                             val text = frame.readText()
                             val msg = Json.decodeFromString<ClientMessage>(text)
                             when (msg.type) {
-                                "join" -> roomManager.join(connection, msg.roomId ?: "Alpha", user.username)
-                                "vote" -> roomManager.vote(connection.roomId, connection.participantId, msg.vote ?: "")
+                                "join" -> roomManager.join(connection, msg.roomId ?: "Alpha", user.username, msg.chips ?: 10)
+                                "vote" -> roomManager.vote(connection.roomId, connection.participantId, msg.vote ?: "", msg.wager ?: 0, msg.isAllIn ?: false)
                                 "reveal" -> roomManager.reveal(connection.roomId)
                                 "reset" -> roomManager.reset(connection.roomId)
+                                "reaction" -> roomManager.reaction(connection.roomId, msg.reaction ?: "🤡")
                             }
                         }
                     }

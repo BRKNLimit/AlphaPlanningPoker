@@ -313,8 +313,76 @@ button:active {
     flex: 1;
 }
 
-.admin-user-item button {
-    width: auto;
-    padding: 5px 10px;
-    font-size: 0.6rem;
+/* --- Holographic / Foil effect --- */
+.foil-card {
+    background: linear-gradient(135deg, #ff00ff, #00ffff, #ff00ff, #00ffff);
+    background-size: 400% 400%;
+    animation: foil-sparkle 3s ease infinite;
+    mix-blend-mode: hard-light;
+    border-color: #fff !important;
+}
+
+@keyframes foil-sparkle {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* --- Screen Shake --- */
+.shake {
+    animation: shake-anim 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake-anim {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* --- All-In Slam --- */
+.slam-animation {
+    animation: slam-anim 0.3s ease-in forwards;
+}
+
+@keyframes slam-anim {
+    0% { transform: scale(2) translateY(-100px); opacity: 0; }
+    70% { transform: scale(0.8) translateY(0); opacity: 1; }
+    100% { transform: scale(1) translateY(0); }
+}
+
+/* --- Floating Emoji --- */
+.floating-emoji {
+    position: absolute;
+    font-size: 2rem;
+    pointer-events: none;
+    animation: float-up 2s ease-out forwards;
+    z-index: 10002;
+}
+
+@keyframes float-up {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-500px) scale(1.5); opacity: 0; }
+}
+
+/* --- Coin Shower --- */
+.coin {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: gold;
+    border-radius: 50%;
+    box-shadow: 0 0 10px gold;
+    pointer-events: none;
+    z-index: 10003;
+}
+
+@keyframes coin-fall {
+    0% { transform: translateY(-100vh) rotate(0); }
+    100% { transform: translateY(100vh) rotate(360deg); }
+}
+
+.participant-card.all-in {
+    border: 4px solid gold !important;
+    box-shadow: 0 0 20px gold !important;
 }

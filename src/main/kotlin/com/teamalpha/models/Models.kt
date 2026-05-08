@@ -10,7 +10,7 @@ enum class UserStatus { PENDING, APPROVED }
 @Serializable
 data class User(
     val username: String,
-    val passwordHash: String, // Simplified for this prototype
+    val passwordHash: String,
     var status: UserStatus = UserStatus.PENDING,
     val isAdmin: Boolean = false
 )
@@ -23,7 +23,11 @@ data class Participant(
     val id: String,
     val name: String,
     var vote: String? = null,
-    val isHost: Boolean = false
+    val isHost: Boolean = false,
+    var chips: Int = 10,
+    var currentWager: Int = 0,
+    var isFoil: Boolean = false,
+    var isAllIn: Boolean = false
 )
 
 @Serializable
@@ -31,7 +35,8 @@ data class Room(
     val id: String,
     val name: String,
     val participants: MutableMap<String, Participant> = mutableMapOf(),
-    var isRevealed: Boolean = false
+    var isRevealed: Boolean = false,
+    var consensusValue: String? = null
 )
 
 @Serializable
@@ -42,7 +47,11 @@ data class ClientMessage(
     val vote: String? = null,
     val username: String? = null,
     val password: String? = null,
-    val targetUsername: String? = null // For admin actions
+    val targetUsername: String? = null,
+    val chips: Int? = null,
+    val wager: Int? = null,
+    val isAllIn: Boolean? = null,
+    val reaction: String? = null
 )
 
 class Connection(val session: DefaultWebSocketServerSession) {
