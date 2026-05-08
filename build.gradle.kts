@@ -2,13 +2,16 @@ plugins {
     kotlin("jvm") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
     application
+    id("idea")
 }
 
 group = "com.teamalpha"
 version = "0.0.1"
 
-kotlin {
-    jvmToolchain(21) // We'll try 21 first, Gradle should be able to find it or use 25 as compatible
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
 }
 
 application {
@@ -32,4 +35,15 @@ dependencies {
     
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.0.0")
+}
+
+tasks.test {
+    useJUnit()
+}
+
+idea {
+    module {
+        isDownloadJavadoc = true
+        isDownloadSources = true
+    }
 }
