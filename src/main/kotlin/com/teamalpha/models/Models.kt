@@ -16,6 +16,13 @@ data class User(
 )
 
 @Serializable
+data class UserDTO(
+    val username: String,
+    val status: UserStatus,
+    val isAdmin: Boolean
+)
+
+@Serializable
 data class UserSession(val username: String) : Principal
 
 @Serializable

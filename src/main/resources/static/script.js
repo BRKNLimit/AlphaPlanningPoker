@@ -1,7 +1,7 @@
 let socket = null;
 let isHost = false;
 let isAdmin = false;
-let myId = null;
+let myUsername = "";
 let chips = parseInt(localStorage.getItem('alpha_chips')) || 10;
 
 const screens = ['login-screen', 'register-screen', 'join-screen', 'game-screen', 'admin-screen'];
@@ -18,50 +18,60 @@ updateChipsUI();
 
 function updateChipsUI() {
     localStorage.setItem('alpha_chips', chips);
-    document.getElementById('chips-display').innerText = `CHIPS: ${chips}`;
-    document.getElementById('wager-slider').max = chips;
+    const display = document.getElementById('chips-display');
+    if (display) display.innerText = `CHIPS: ${chips}`;
+    const slider = document.getElementById('wager-slider');
+    if (slider) slider.max = chips;
 }
 
 // Auth Handlers
 document.getElementById('login-btn').addEventListener('click', async () => {
-    const username = document.getElementById('login-user').value;
-    const password = document.getElementById('login-pass').value;
-    
-    const res = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-    
-    if (data.status === 'OK') {
-        isAdmin = data.isAdmin;
-        document.getElementById('user-display').innerText = username.toUpperCase();
-        if (isAdmin) document.getElementById('admin-panel-btn').classList.remove('hidden');
-        showScreen('join-screen');
-    } else if (data.status === 'PENDING') {
-        alert(data.message || 'WAITING FOR ADMIN APPROVAL');
-    } else {
-        alert(data.message || 'INVALID CREDENTIALS');
+    const username = document.getElementById('login-user').value.trim();
+    const password = document.getElementById('login-pass').value.trim();
+    if (!username || !password) return alert("ENTER CREDENTIALS");
+
+    try {
+        const res = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        
+        if (data.status === 'OK') {
+            isAdmin = data.isAdmin;
+            myUsername = username;
+            document.getElementById('user-display').innerText = username.toUpperCase();
+            if (isAdmin) document.getElementById('admin-panel-btn').classList.remove('hidden');
+            showScreen('join-screen');
+        } else {
+            alert(data.message || 'LOGIN FAILED');
+        }
+    } catch (e) {
+        alert("SERVER DOWN");
     }
 });
 
 document.getElementById('reg-btn').addEventListener('click', async () => {
-    const username = document.getElementById('reg-user').value;
-    const password = document.getElementById('reg-pass').value;
-    
-    const res = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-    
-    if (data.status === 'OK') {
-        alert('REGISTRATION SUCCESSFUL. WAIT FOR ADMIN APPROVAL.');
-        showScreen('login-screen');
-    } else {
-        alert('REGISTRATION FAILED');
+    const username = document.getElementById('reg-user').value.trim();
+    const password = document.getElementById('reg-pass').value.trim();
+    if (!username || !password) return alert("ENTER CREDENTIALS");
+
+    try {
+        const res = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.status === 'OK') {
+            alert('REGISTERED. WAIT FOR ADMIN APPROVAL.');
+            showScreen('login-screen');
+        } else {
+            alert(data.message || 'REGISTRATION FAILED');
+        }
+    } catch (e) {
+        alert("SERVER DOWN");
     }
 });
 
@@ -79,7 +89,7 @@ async function loadAdminPanel() {
         const item = document.createElement('div');
         item.className = 'admin-user-item';
         item.innerHTML = `
-            <span>${user.username} (${user.status})</span>
+            <span>${user.username} [${user.status}]</span>
             ${user.status === 'PENDING' ? `<button onclick="approveUser('${user.username}')">APPROVE</button>` : ''}
         `;
         list.appendChild(item);
@@ -123,7 +133,7 @@ document.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', () => {
         const value = card.dataset.value;
         const wager = parseInt(wagerSlider.value);
-        const isAllIn = wager >= chips && chips > 0;
+        const isAllIn = (wager >= chips && chips > 0);
         
         document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
@@ -138,9 +148,10 @@ document.querySelectorAll('.card').forEach(card => {
 });
 
 function joinRoom() {
-    const roomId = document.getElementById('room-input').value || 'ALPHA';
-
+    const roomId = document.getElementById('room-input').value.trim() || 'ALPHA';
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    
+    if (socket) socket.close();
     socket = new WebSocket(`${protocol}//${window.location.host}/poker`);
 
     socket.onopen = () => {
@@ -152,30 +163,23 @@ function joinRoom() {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
-        if (data.type === 'reaction') {
-            triggerReaction(data.emoji);
-            return;
-        }
-        
-        if (data.type === 'allInSlam') {
-            triggerSlam(data.pId);
-            return;
-        }
+        if (data.type === 'reaction') return triggerReaction(data.emoji);
+        if (data.type === 'allInSlam') return triggerSlam(data.pId);
+        if (data.type === 'cleanSweep') return triggerCleanSweep();
 
-        if (data.type === 'cleanSweep') {
-            triggerCleanSweep();
-            return;
+        // Room Update
+        if (data.id && data.name) {
+            document.getElementById('room-name-display').innerText = data.name.toUpperCase();
+            document.getElementById('room-id-display').innerText = data.id;
+            updateUI(data);
         }
-
-        // Standard Room Update
-        document.getElementById('room-name-display').innerText = data.name.toUpperCase();
-        document.getElementById('room-id-display').innerText = data.id;
-        updateUI(data);
     };
 
-    socket.onclose = () => {
-        alert('Connection lost');
-        window.location.reload();
+    socket.onclose = (e) => {
+        if (!gameScreen.classList.contains('hidden')) {
+            alert('CONNECTION LOST');
+            window.location.reload();
+        }
     };
 }
 
@@ -190,24 +194,19 @@ function updateUI(room) {
     participantsGrid.innerHTML = '';
     
     Object.values(room.participants).forEach(p => {
-        const isMe = p.name === document.getElementById('user-display').innerText;
-        if (isMe) chips = p.chips; // Sync chips from server
+        const isMe = p.name === myUsername;
+        if (isMe) chips = p.chips; 
 
         const div = document.createElement('div');
         div.id = `participant-${p.id}`;
         div.className = `participant-card ${p.vote ? 'voted' : ''} ${p.isAllIn ? 'all-in' : ''} ${p.isFoil ? 'foil-card' : ''}`;
         
-        if (room.isRevealed && p.vote) {
-            div.classList.add('reveal-animation');
-        }
+        if (room.isRevealed && p.vote) div.classList.add('reveal-animation');
         
         let voteContent = '';
         if (room.isRevealed) {
             voteContent = `<div class="vote-value">${p.vote || '-'}</div>`;
-            // Trigger coin shower if won
-            if (isMe && p.vote === room.consensusValue && room.consensusValue != null) {
-                triggerCoinShower();
-            }
+            if (isMe && p.vote === room.consensusValue && room.consensusValue != null) triggerCoinShower();
         } else {
             voteContent = p.vote ? `<div class="vote-hidden"></div>` : `<div class="vote-value">-</div>`;
         }
@@ -226,15 +225,11 @@ function updateUI(room) {
     });
 
     updateChipsUI();
-
-    if (!room.isRevealed) {
-        if (Object.values(room.participants).every(p => !p.vote)) {
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-        }
+    if (!room.isRevealed && Object.values(room.participants).every(p => !p.vote)) {
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
     }
 }
 
-// Juiciness Triggers
 function triggerReaction(emoji) {
     const el = document.createElement('div');
     el.className = 'floating-emoji';
@@ -274,10 +269,8 @@ function triggerCoinShower() {
     }
 }
 
-// Shortcuts
 window.addEventListener('keydown', (e) => {
     if (document.getElementById('game-screen').classList.contains('hidden')) return;
-
     if (e.key >= '1' && e.key <= '9') {
         const values = ['1', '2', '3', '5', '8', '13', '21', '34', '55'];
         const val = values[parseInt(e.key) - 1];
@@ -286,13 +279,6 @@ window.addEventListener('keydown', (e) => {
             if (card) card.click();
         }
     }
-
-    if (e.key === ' ' && isHost) {
-        send({type: 'reveal'});
-        e.preventDefault();
-    }
-
-    if (e.key === 'Escape' && isHost) {
-        send({type: 'reset'});
-    }
+    if (e.key === ' ' && isHost) { send({type: 'reveal'}); e.preventDefault(); }
+    if (e.key === 'Escape' && isHost) { send({type: 'reset'}); }
 });

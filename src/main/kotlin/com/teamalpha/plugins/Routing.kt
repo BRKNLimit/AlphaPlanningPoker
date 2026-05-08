@@ -12,7 +12,6 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 fun Application.configureRouting(roomManager: RoomManager, userManager: UserManager) {
@@ -22,21 +21,19 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
         post("/login") {
             try {
                 val msg = call.receive<ClientMessage>()
-                println("LOGIN ATTEMPT: ${msg.username}")
                 val user = userManager.authenticate(msg.username ?: "", msg.password ?: "")
                 if (user != null) {
                     if (user.status == UserStatus.APPROVED) {
                         call.sessions.set(UserSession(user.username))
                         call.respond(AuthResponse("OK", isAdmin = user.isAdmin))
                     } else {
-                        call.respond(AuthResponse("PENDING", message = "User not yet approved by admin"))
+                        call.respond(AuthResponse("PENDING", message = "Wait for admin approval"))
                     }
                 } else {
-                    call.respond(AuthResponse("ERROR", message = "Invalid username or password"))
+                    call.respond(AuthResponse("ERROR", message = "Invalid credentials"))
                 }
             } catch (e: Exception) {
-                println("LOGIN EXCEPTION: ${e.message}")
-                call.respond(AuthResponse("ERROR", message = "Server Error: ${e.message}"))
+                call.respond(AuthResponse("ERROR", message = e.message))
             }
         }
 
@@ -44,13 +41,9 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
             try {
                 val msg = call.receive<ClientMessage>()
                 val success = userManager.register(msg.username ?: "", msg.password ?: "")
-                if (success) {
-                    call.respond(AuthResponse("OK"))
-                } else {
-                    call.respond(AuthResponse("ERROR", message = "User already exists"))
-                }
+                if (success) call.respond(AuthResponse("OK")) 
+                else call.respond(AuthResponse("ERROR", message = "User already exists"))
             } catch (e: Exception) {
-                application.log.error("Registration error", e)
                 call.respond(AuthResponse("ERROR", message = e.message))
             }
         }
@@ -58,30 +51,38 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
         authenticate("auth-session") {
             get("/admin/users") {
                 val session = call.sessions.get<UserSession>()
-                val user = userManager.getAllUsers().find { it.username == session?.username }
+                val user = userManager.getUser(session?.username ?: "")
                 if (user?.isAdmin == true) {
-                    call.respond(userManager.getAllUsers())
+                    call.respond(userManager.getAllUsersDTO())
                 } else {
-                    call.respond(AuthResponse("ERROR", message = "Forbidden"))
+                    call.respond(AuthResponse("ERROR", message = "Unauthorized"))
                 }
             }
 
             post("/admin/approve") {
                 val session = call.sessions.get<UserSession>()
-                val user = userManager.getAllUsers().find { it.username == session?.username }
+                val user = userManager.getUser(session?.username ?: "")
                 if (user?.isAdmin == true) {
                     val msg = call.receive<ClientMessage>()
                     userManager.approveUser(msg.targetUsername ?: "")
                     call.respond(AuthResponse("OK"))
                 } else {
-                    call.respond(AuthResponse("ERROR", message = "Forbidden"))
+                    call.respond(AuthResponse("ERROR", message = "Unauthorized"))
                 }
             }
 
             webSocket("/poker") {
-                val session = call.sessions.get<UserSession>() ?: return@webSocket close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No session"))
-                val user = userManager.getAllUsers().find { it.username == session.username }
-                if (user?.status != UserStatus.APPROVED) return@webSocket close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Not approved"))
+                val session = call.sessions.get<UserSession>()
+                if (session == null) {
+                    close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No session"))
+                    return@webSocket
+                }
+                
+                val user = userManager.getUser(session.username)
+                if (user == null || user.status != UserStatus.APPROVED) {
+                    close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Not approved"))
+                    return@webSocket
+                }
 
                 val connection = Connection(this)
                 connection.username = user.username
@@ -100,6 +101,8 @@ fun Application.configureRouting(roomManager: RoomManager, userManager: UserMana
                             }
                         }
                     }
+                } catch (e: Exception) {
+                    println("WS Error: ${e.message}")
                 } finally {
                     roomManager.disconnect(connection)
                 }
