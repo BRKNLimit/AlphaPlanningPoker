@@ -23,7 +23,7 @@ class RoomManager {
         if (input.isEmpty()) return
 
         // 1. Resolve or Create Room
-        var room = rooms[input] ?: rooms[nameToId[input]]
+        var room = rooms[input] ?: nameToId[input]?.let { rooms[it] }
         
         if (room == null) {
             val newId = generateUniqueId()
