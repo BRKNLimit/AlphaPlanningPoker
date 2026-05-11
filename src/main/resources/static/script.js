@@ -4,6 +4,7 @@ let myId = null;
 let isHost = false;
 let myUsername = "";
 let isAllInMode = false;
+let allInCooldown = 0; // Cooldown in seconds
 
 const screens = ['start-screen', 'role-screen', 'game-screen'];
 
@@ -163,7 +164,34 @@ function send(data) {
 }
 
 function sendVote(val) {
+    if (isAllInMode && allInCooldown > 0) return alert(`COOLDOWN ACTIVE: ${Math.ceil(allInCooldown / 60)}m`);
+    
     send({ type: "vote", vote: val, isAllIn: isAllInMode });
+    
+    if (isAllInMode) {
+        startAllInCooldown();
+        toggleAllIn(); // Auto-off after use
+    }
+}
+
+function startAllInCooldown() {
+    allInCooldown = 180; // 3 minutes
+    const btn = document.getElementById('btn-allin');
+    btn.disabled = true;
+    
+    const interval = setInterval(() => {
+        allInCooldown--;
+        const mins = Math.floor(allInCooldown / 60);
+        const secs = allInCooldown % 60;
+        btn.innerText = `COOLDOWN: ${mins}:${secs.toString().padStart(2, '0')}`;
+        
+        if (allInCooldown <= 0) {
+            clearInterval(interval);
+            btn.disabled = false;
+            btn.innerText = 'ALL-IN MODE: OFF';
+            btn.className = 'bg-black border-2 border-gray-600 text-gray-400 px-4 py-2 pixel-font text-xs transition';
+        }
+    }, 1000);
 }
 
 function sendReveal() { send({ type: "reveal" }); }
