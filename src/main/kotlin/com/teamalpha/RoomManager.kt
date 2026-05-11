@@ -19,35 +19,48 @@ class RoomManager {
     }
 
     suspend fun join(connection: Connection, roomNameOrId: String, username: String) {
-        val sanitizedRoomId = roomNameOrId.trim()
-        if (sanitizedRoomId.isEmpty()) return
+        val input = roomNameOrId.trim()
+        if (input.isEmpty()) return
 
-        var room = rooms[sanitizedRoomId] ?: rooms[nameToId[sanitizedRoomId]]
+        // 1. Resolve or Create Room
+        var room = rooms[input] ?: rooms[nameToId[input]]
         
         if (room == null) {
-            val id = generateUniqueId()
-            val name = if (sanitizedRoomId.startsWith("#")) "New Room" else sanitizedRoomId
-            room = Room(id, name, participants = ConcurrentHashMap())
-            rooms[id] = room
-            nameToId[name] = id
+            val newId = generateUniqueId()
+            val newName = if (input.startsWith("#")) "New Room" else input
+            room = Room(id = newId, name = newName, participants = ConcurrentHashMap<String, Participant>())
+            
+            rooms[newId] = room
+            nameToId[newName] = newId
         }
 
-        val pId = UUID.randomUUID().toString()
-        val isHost = room.participants.isEmpty()
-        val participant = Participant(pId, username, isHost = isHost)
+        // 2. Room is now guaranteed non-null and has a non-null ID
+        val targetRoomId = room.id
+        val newParticipantId = UUID.randomUUID().toString()
+        val isFirst = room.participants.isEmpty()
         
-        (room.participants as ConcurrentHashMap)[pId] = participant
-        connection.participantId = pId
-        connection.roomId = room.id
+        val participant = Participant(id = newParticipantId, name = username, isHost = isFirst)
+        
+        // 3. Update Maps (Safe casts to ConcurrentHashMap for internal mutation)
+        (room.participants as MutableMap<String, Participant>)[newParticipantId] = participant
+        
+        // 4. Update Connection Object
+        connection.participantId = newParticipantId
+        connection.roomId = targetRoomId
         connection.username = username
         
-        connections.computeIfAbsent(room.id) { CopyOnWriteArraySet() }.add(connection)
+        // 5. Manage Connection Pool
+        connections.computeIfAbsent(targetRoomId) { CopyOnWriteArraySet() }.add(connection)
         
+        // 6. Notify Client
         try {
-            connection.session.send(Frame.Text(json.encodeToString(ClientMessage(type = "welcome", yourId = pId))))
-        } catch (e: Exception) {}
+            val welcomeMsg = json.encodeToString(ClientMessage(type = "welcome", yourId = newParticipantId))
+            connection.session.send(Frame.Text(welcomeMsg))
+        } catch (e: Exception) {
+            println("Welcome Send Fail: ${e.message}")
+        }
         
-        broadcast(room.id)
+        broadcast(targetRoomId)
     }
 
     private fun generateUniqueId(): String {
@@ -58,25 +71,27 @@ class RoomManager {
         return id
     }
 
-    suspend fun vote(roomId: String, pId: String, vote: String) {
-        if (roomId.isEmpty() || pId.isEmpty()) return
-        val room = rooms[roomId] ?: return
+    suspend fun vote(rId: String?, pId: String?, voteValue: String) {
+        if (rId.isNullOrEmpty() || pId.isNullOrEmpty()) return
+        
+        val room = rooms[rId] ?: return
         val p = room.participants[pId] ?: return
         
-        p.vote = vote
+        p.vote = voteValue
         p.isFoil = (1..100).random() <= 5
         
-        broadcast(roomId)
+        broadcast(rId)
     }
 
-    suspend fun reaction(roomId: String, reaction: String) {
-        if (roomId.isEmpty()) return
-        broadcastRaw(roomId, json.encodeToString(ClientMessage(type = "reaction", emoji = reaction)))
+    suspend fun reaction(rId: String?, emoji: String) {
+        if (rId.isNullOrEmpty()) return
+        val msg = json.encodeToString(ClientMessage(type = "reaction", emoji = emoji))
+        broadcastRaw(rId, msg)
     }
 
-    suspend fun reveal(roomId: String) {
-        if (roomId.isEmpty()) return
-        val room = rooms[roomId] ?: return
+    suspend fun reveal(rId: String?) {
+        if (rId.isNullOrEmpty()) return
+        val room = rooms[rId] ?: return
         room.isRevealed = true
         
         val voters = room.participants.values.filter { !it.isHost }
@@ -84,24 +99,25 @@ class RoomManager {
         
         if (votes.isNotEmpty() && votes.all { it == votes[0] }) {
             room.consensusValue = votes[0]
-            broadcastRaw(roomId, json.encodeToString(ClientMessage(type = "cleanSweep", vote = votes[0])))
+            val sweepMsg = json.encodeToString(ClientMessage(type = "cleanSweep", vote = votes[0]))
+            broadcastRaw(rId, sweepMsg)
         } else {
             room.consensusValue = null
         }
 
-        broadcast(roomId)
+        broadcast(rId)
     }
 
-    suspend fun reset(roomId: String) {
-        if (roomId.isEmpty()) return
-        val room = rooms[roomId] ?: return
+    suspend fun reset(rId: String?) {
+        if (rId.isNullOrEmpty()) return
+        val room = rooms[rId] ?: return
         room.isRevealed = false
         room.consensusValue = null
         room.participants.values.forEach { 
             it.vote = null 
             it.isFoil = false
         }
-        broadcast(roomId)
+        broadcast(rId)
     }
 
     suspend fun disconnect(connection: Connection) {
@@ -112,7 +128,7 @@ class RoomManager {
         
         val room = rooms[rId] ?: return
         
-        (room.participants as ConcurrentHashMap).remove(pId)
+        (room.participants as MutableMap<String, Participant>).remove(pId)
         connections[rId]?.remove(connection)
         
         if (room.participants.isEmpty()) {
@@ -125,7 +141,7 @@ class RoomManager {
                 if (nextHostId != null) {
                     val p = room.participants[nextHostId]
                     if (p != null) {
-                        (room.participants as ConcurrentHashMap)[nextHostId] = p.copy(isHost = true)
+                        (room.participants as MutableMap<String, Participant>)[nextHostId] = p.copy(isHost = true)
                     }
                 }
             }
@@ -133,15 +149,19 @@ class RoomManager {
         }
     }
 
-    private suspend fun broadcast(roomId: String) {
-        if (roomId.isEmpty()) return
-        val room = rooms[roomId] ?: return
-        broadcastRaw(roomId, json.encodeToString(room))
+    private suspend fun broadcast(rId: String) {
+        if (rId.isEmpty()) return
+        val room = rooms[rId] ?: return
+        try {
+            broadcastRaw(rId, json.encodeToString(room))
+        } catch (e: Exception) {
+            println("Broadcast Serial Fail: ${e.message}")
+        }
     }
 
-    private suspend fun broadcastRaw(roomId: String, message: String) {
-        if (roomId.isEmpty()) return
-        connections[roomId]?.forEach { 
+    private suspend fun broadcastRaw(rId: String, message: String) {
+        if (rId.isEmpty()) return
+        connections[rId]?.forEach { 
             try {
                 it.session.send(Frame.Text(message))
             } catch (e: Exception) {}

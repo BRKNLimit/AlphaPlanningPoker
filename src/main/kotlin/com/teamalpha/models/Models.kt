@@ -8,13 +8,13 @@ data class Participant(
     val id: String,
     val name: String,
     var vote: String? = null,
-    val isHost: Boolean = false,
+    var isHost: Boolean = false,
     var isFoil: Boolean = false
 )
 
 @Serializable
 data class Room(
-    val id: String,
+    val id: String, // Explicitly non-nullable
     val name: String,
     val participants: Map<String, Participant>,
     var isRevealed: Boolean = false,
