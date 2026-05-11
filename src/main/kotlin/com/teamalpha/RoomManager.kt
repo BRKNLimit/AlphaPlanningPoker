@@ -20,11 +20,14 @@ class RoomManager {
     }
 
     suspend fun join(connection: Connection, roomNameOrId: String, username: String, initialChips: Int) {
-        var room = rooms[roomNameOrId] ?: rooms[nameToId[roomNameOrId]]
+        val sanitizedRoomId = roomNameOrId.trim()
+        if (sanitizedRoomId.isEmpty()) return
+
+        var room = rooms[sanitizedRoomId] ?: rooms[nameToId[sanitizedRoomId]]
         
         if (room == null) {
             val id = generateUniqueId()
-            val name = if (roomNameOrId.startsWith("#")) "New Room" else roomNameOrId
+            val name = if (sanitizedRoomId.startsWith("#")) "New Room" else sanitizedRoomId
             room = Room(id, name, participants = ConcurrentHashMap())
             rooms[id] = room
             nameToId[name] = id
@@ -37,13 +40,16 @@ class RoomManager {
         room.participants[pId] = participant
         connection.participantId = pId
         connection.roomId = room.id
+        connection.username = username
         
         connections.computeIfAbsent(room.id) { CopyOnWriteArraySet() }.add(connection)
         
         // Send welcome to the joining client
         try {
             connection.session.send(Frame.Text(json.encodeToString(ClientMessage(type = "welcome", yourId = pId))))
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            println("Error sending welcome: ${e.message}")
+        }
         
         broadcast(room.id)
     }
@@ -56,7 +62,8 @@ class RoomManager {
         return id
     }
 
-    suspend fun vote(roomId: String, pId: String, vote: String) {
+    suspend fun vote(roomId: String?, pId: String?, vote: String) {
+        if (roomId == null || pId == null) return
         val room = rooms[roomId] ?: return
         val p = room.participants[pId] ?: return
         
@@ -66,11 +73,13 @@ class RoomManager {
         broadcast(roomId)
     }
 
-    suspend fun reaction(roomId: String, reaction: String) {
+    suspend fun reaction(roomId: String?, reaction: String) {
+        if (roomId == null) return
         broadcastRaw(roomId, json.encodeToString(ClientMessage(type = "reaction", emoji = reaction)))
     }
 
-    suspend fun reveal(roomId: String) {
+    suspend fun reveal(roomId: String?) {
+        if (roomId == null) return
         val room = rooms[roomId] ?: return
         room.isRevealed = true
         
@@ -88,7 +97,8 @@ class RoomManager {
         broadcast(roomId)
     }
 
-    suspend fun reset(roomId: String) {
+    suspend fun reset(roomId: String?) {
+        if (roomId == null) return
         val room = rooms[roomId] ?: return
         room.isRevealed = false
         room.consensusValue = null
@@ -104,6 +114,9 @@ class RoomManager {
     suspend fun disconnect(connection: Connection) {
         val roomId = connection.roomId
         val pId = connection.participantId
+        
+        if (roomId.isEmpty() || pId.isEmpty()) return
+        
         val room = rooms[roomId] ?: return
         
         room.participants.remove(pId)
