@@ -25,8 +25,11 @@ fun Application.configureRouting(roomManager: RoomManager) {
                         val text = frame.readText()
                         val msg = Json.decodeFromString<ClientMessage>(text)
                         when (msg.type) {
-                            "join" -> roomManager.join(connection, msg.roomId ?: "Alpha", msg.username ?: "Player")
-                            "vote" -> roomManager.vote(connection.roomId, connection.participantId, msg.vote ?: "")
+                            "join" -> {
+                                connection.username = msg.username ?: "Unknown Player"
+                                roomManager.join(connection, msg.roomId ?: "", connection.username)
+                            }
+                            "vote" -> roomManager.vote(connection.roomId, connection.participantId, msg.vote ?: "", msg.isAllIn ?: false)
                             "reveal" -> roomManager.reveal(connection.roomId)
                             "reset" -> roomManager.reset(connection.roomId)
                             "reaction" -> roomManager.reaction(connection.roomId, msg.reaction ?: "🤡")
@@ -36,7 +39,9 @@ fun Application.configureRouting(roomManager: RoomManager) {
             } catch (e: Exception) {
                 println("WS Error: ${e.message}")
             } finally {
-                roomManager.disconnect(connection)
+                if (connection.roomId.isNotEmpty()) {
+                    roomManager.disconnect(connection)
+                }
             }
         }
     }

@@ -7,16 +7,17 @@ import kotlinx.serialization.Serializable
 data class Participant(
     val id: String,
     val name: String,
+    val isHost: Boolean = false,
     var vote: String? = null,
-    var isHost: Boolean = false,
+    var isAllIn: Boolean = false,
     var isFoil: Boolean = false
 )
 
 @Serializable
 data class Room(
-    val id: String, // Explicitly non-nullable
+    val id: String,
     val name: String,
-    val participants: Map<String, Participant>,
+    val participants: MutableMap<String, Participant> = mutableMapOf(),
     var isRevealed: Boolean = false,
     var consensusValue: String? = null
 )
@@ -27,9 +28,9 @@ data class ClientMessage(
     val roomId: String? = null,
     val vote: String? = null,
     val username: String? = null,
+    val isAllIn: Boolean? = false,
     val reaction: String? = null,
     val emoji: String? = null,
-    val pId: String? = null,
     val yourId: String? = null
 )
 

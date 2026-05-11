@@ -4,83 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Alpha | Planning Poker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="h-screen w-screen flex flex-col items-center justify-center relative">
     <div class="crt-overlay"></div>
-    <div class="grain-overlay"></div>
-    
-    <header>
-        <div class="logo" style="color: var(--primary); font-weight: bold;">TEAM ALPHA</div>
-        <div class="header-right">
-            <div id="user-display" class="room-id">PLAYER</div>
-        </div>
-    </header>
 
-    <div id="animation-layer" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10000;"></div>
-    <div id="sweep-overlay" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:gold; text-shadow:0 0 20px gold; z-index:10001; text-align:center;">CLEAN ESTIMATE!</div>
+    <div id="start-screen" class="z-10 flex flex-col items-center text-center space-y-8">
+        <div class="pixel-coin mb-4" id="start-coin"></div>
+        <h1 class="pixel-font text-5xl text-[#E30613] drop-shadow-[0_0_10px_rgba(227,6,19,0.8)]">TEAM ALPHA</h1>
+        <h2 class="pixel-font text-xl blink">INSERT COIN / PRESS START</h2>
+    </div>
 
-    <!-- Start Screen -->
-    <main id="start-screen">
-        <div class="pixel-coin" id="start-coin"></div>
-        <div class="insert-coin-text">INSERT COIN</div>
-    </main>
-
-    <!-- Role Selection -->
-    <main id="role-screen" class="hidden">
-        <h1>CHOOSE YOUR DESTINY</h1>
-        <div class="role-box">
-            <div class="role-option" id="host-opt">
-                <h2>HOST</h2>
-                <p style="font-size: 0.6rem; margin-top: 10px;">START NEW SESSION</p>
+    <div id="role-screen" class="hidden z-10 flex flex-col items-center space-y-8">
+        <h1 class="pixel-font text-3xl text-[#E30613]">CHOOSE YOUR DESTINY</h1>
+        <div class="bg-gray-900 p-8 rounded-lg border-2 border-[#E30613] w-96 flex flex-col space-y-4 shadow-[0_0_20px_rgba(227,6,19,0.3)]">
+            <input type="text" id="usernameInput" placeholder="YOUR NAME" class="bg-black text-white pixel-font text-sm p-4 border border-gray-700 focus:border-[#E30613] outline-none text-center uppercase">
+            <div class="flex space-x-2">
+                <button onclick="joinGame(true)" class="flex-1 bg-[#E30613] text-white pixel-font p-3 hover:bg-red-700 transition">HOST</button>
             </div>
-            <div class="role-option" id="join-opt">
-                <h2>JOIN</h2>
-                <div class="join-input-group">
-                    <input type="text" id="username-input" placeholder="YOUR NAME" maxlength="15" style="margin-bottom: 10px; width: 100%;">
-                    <input type="text" id="room-input" placeholder="#XXXX" maxlength="5" style="margin-bottom: 10px; width: 100%;">
-                    <button id="join-btn" style="padding: 10px;">ENTER</button>
+            <div class="flex space-x-2 items-center">
+                <span class="text-gray-500 font-bold">OR</span>
+                <input type="text" id="roomIdInput" placeholder="#XXXX" maxlength="5" class="flex-1 bg-black text-white pixel-font text-xs p-3 border border-gray-700 focus:border-[#E30613] outline-none text-center">
+                <button onclick="joinGame(false)" class="bg-gray-700 text-white pixel-font p-3 hover:bg-gray-600 transition">JOIN</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-screen" class="hidden w-full h-full flex-col relative z-10">
+        <header class="flex justify-between items-center p-4 border-b border-gray-800 bg-black/50">
+            <div class="pixel-font text-[#E30613] text-xl">ALPHA POKER</div>
+            <div id="user-display" class="pixel-font text-xs text-gray-400">PLAYER</div>
+            <div class="flex space-x-4">
+                <button id="btn-reveal" onclick="sendReveal()" class="hidden bg-[#E30613] px-4 py-2 pixel-font text-xs hover:bg-red-700">REVEAL</button>
+                <button id="btn-reset" onclick="sendReset()" class="hidden bg-gray-700 px-4 py-2 pixel-font text-xs hover:bg-gray-600">RESET</button>
+            </div>
+        </header>
+
+        <main class="flex-1 flex flex-col items-center justify-start relative pt-8">
+            <div id="centered-room-id" class="pixel-font text-3xl text-[#E30613] mb-8 tracking-[4px] drop-shadow-[0_0_10px_#E30613]">#0000</div>
+            
+            <div id="clean-sweep-banner" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pixel-font text-4xl text-[#E30613] animate-bounce drop-shadow-[0_0_20px_#E30613] text-center">
+                CLEAN ESTIMATE!<br><span class="text-xl">TEAM CONSENSUS</span>
+            </div>
+
+            <div id="table-area" class="flex flex-wrap justify-center gap-8 p-8 max-w-6xl w-full">
+                <!-- Participants here -->
+            </div>
+        </main>
+
+        <footer class="p-6 bg-gradient-to-t from-black to-transparent flex flex-col items-center">
+            <div class="flex space-x-4 mb-6">
+                <button onclick="sendReaction('🤡')" class="text-3xl hover:scale-125 transition">🤡</button>
+                <button onclick="sendReaction('💀')" class="text-3xl hover:scale-125 transition">💀</button>
+                <button onclick="sendReaction('🔥')" class="text-3xl hover:scale-125 transition">🔥</button>
+                <button onclick="sendReaction('☕')" class="text-3xl hover:scale-125 transition">☕</button>
+            </div>
+
+            <div class="flex space-x-8 items-center">
+                <div id="my-deck" class="flex space-x-2">
+                    <!-- Fibonacci cards here -->
+                </div>
+                
+                <div class="pl-8 border-l border-gray-700 flex flex-col items-center">
+                    <label class="pixel-font text-[10px] text-gray-400 mb-2">HIGH CONFIDENCE?</label>
+                    <button id="btn-allin" onclick="toggleAllIn()" class="bg-black border-2 border-gray-600 text-gray-400 px-4 py-2 pixel-font text-xs transition">ALL-IN MODE: OFF</button>
                 </div>
             </div>
-        </div>
-    </main>
-
-    <!-- Game Screen -->
-    <main id="game-screen" class="hidden">
-        <div id="centered-room-id" class="centered-room-display">#0000</div>
-        
-        <div class="reactions-bar" style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
-            <button class="reaction-btn" data-emoji="🤡" style="width:auto; padding:5px 10px;">🤡</button>
-            <button class="reaction-btn" data-emoji="💀" style="width:auto; padding:5px 10px;">💀</button>
-            <button class="reaction-btn" data-emoji="🔥" style="width:auto; padding:5px 10px;">🔥</button>
-            <button class="reaction-btn" data-emoji="☕" style="width:auto; padding:5px 10px;">☕</button>
-        </div>
-
-        <div id="participants" class="participants-grid">
-            <!-- Participants will be injected here -->
-        </div>
-
-        <div class="controls">
-            <div id="host-controls" class="hidden">
-                <button id="reveal-btn">REVEAL</button>
-                <button id="reset-btn">RESET</button>
-            </div>
-        </div>
-
-        <div id="cards" class="cards-container">
-            <div class="card" data-value="1">1</div>
-            <div class="card" data-value="2">2</div>
-            <div class="card" data-value="3">3</div>
-            <div class="card" data-value="5">5</div>
-            <div class="card" data-value="8">8</div>
-            <div class="card" data-value="13">13</div>
-            <div class="card" data-value="21">21</div>
-            <div class="card" data-value="34">34</div>
-            <div class="card" data-value="55">55</div>
-            <div class="card" data-value="?">?</div>
-        </div>
-    </main>
+        </footer>
+    </div>
 
     <script src="script.js"></script>
 </body>

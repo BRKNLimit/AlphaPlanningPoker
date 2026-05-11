@@ -1,7 +1,9 @@
+const fibonacci = ["0", "1", "2", "3", "5", "8", "13", "21", "?", "☕"];
 let socket = null;
+let myId = null;
 let isHost = false;
-let myId = "";
-let myUsername = "Player_" + Math.floor(Math.random() * 1000);
+let myUsername = "";
+let isAllInMode = false;
 
 const screens = ['start-screen', 'role-screen', 'game-screen'];
 
@@ -9,10 +11,12 @@ function showScreen(screenId) {
     screens.forEach(id => {
         document.getElementById(id).classList.add('hidden');
     });
-    document.getElementById(screenId).classList.remove('hidden');
+    const el = document.getElementById(screenId);
+    el.classList.remove('hidden');
+    if (screenId === 'game-screen') el.classList.add('flex');
 }
 
-// Retro Start Logic
+// 1. Retro Start Logic
 document.getElementById('start-coin').addEventListener('click', function() {
     this.classList.add('fast-spin');
     setTimeout(() => {
@@ -20,85 +24,130 @@ document.getElementById('start-coin').addEventListener('click', function() {
     }, 750);
 });
 
-document.getElementById('host-opt').addEventListener('click', () => {
-    isHost = true;
-    myUsername = "Master";
-    joinRoom("NEW_SESSION");
+// 2. Init Deck
+const deckContainer = document.getElementById('my-deck');
+fibonacci.forEach(val => {
+    const btn = document.createElement('button');
+    btn.className = 'poker-card w-12 h-16 sm:w-16 sm:h-24 pixel-font text-lg sm:text-2xl font-bold';
+    btn.innerText = val;
+    btn.onclick = () => sendVote(val);
+    btn.dataset.value = val;
+    deckContainer.appendChild(btn);
 });
 
-document.getElementById('join-btn').addEventListener('click', () => {
-    const roomId = document.getElementById('room-input').value.trim();
-    const chosenName = document.getElementById('username-input').value.trim();
-    if (!roomId) return alert("ENTER ROOM CODE");
-    if (!chosenName) return alert("ENTER YOUR NAME");
+function joinGame(host) {
+    const name = document.getElementById('usernameInput').value.trim();
+    const room = document.getElementById('roomIdInput').value.trim();
     
-    isHost = false;
-    myUsername = chosenName;
-    joinRoom(roomId);
-});
+    if (host) {
+        myUsername = "Master";
+        startSession("");
+    } else {
+        if (!name) return alert("ENTER YOUR NAME");
+        if (!room) return alert("ENTER ROOM CODE");
+        myUsername = name;
+        startSession(room);
+    }
+}
 
-// Reactions
-document.querySelectorAll('.reaction-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        send({ type: 'reaction', reaction: btn.dataset.emoji });
-    });
-});
-
-// Game Handlers
-document.getElementById('reveal-btn').addEventListener('click', () => send({type: 'reveal'}));
-document.getElementById('reset-btn').addEventListener('click', () => send({type: 'reset'}));
-
-document.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('click', () => {
-        if (isHost) return; // Host cannot vote
-        const value = card.dataset.value;
-        
-        document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        
-        send({
-            type: 'vote', 
-            vote: value
-        });
-    });
-});
-
-function joinRoom(roomId) {
+function startSession(roomId) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    
-    if (socket) socket.close();
     socket = new WebSocket(`${protocol}//${window.location.host}/poker`);
 
     socket.onopen = () => {
-        send({type: 'join', roomId, username: myUsername});
+        send({
+            type: "join",
+            username: myUsername,
+            roomId: roomId
+        });
         showScreen('game-screen');
         document.getElementById('user-display').innerText = myUsername;
     };
 
     socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        const msg = JSON.parse(event.data);
         
-        if (data.type === 'welcome') {
-            myId = data.yourId;
-            return;
-        }
-        if (data.type === 'reaction') return triggerReaction(data.emoji);
-        if (data.type === 'cleanSweep') return triggerCleanSweep();
+        if (msg.type === "welcome") { myId = msg.yourId; return; }
+        if (msg.type === "allInSlam") { triggerScreenShake(); return; }
+        if (msg.type === "reaction") { spawnReaction(msg.emoji); return; }
+        if (msg.type === "cleanSweep") { triggerCleanSweep(msg.vote); return; }
 
-        // Room Update
-        if (data.id && data.name) {
-            const roomIdEl = document.getElementById('centered-room-id');
-            if (roomIdEl) roomIdEl.innerText = data.id;
-            updateUI(data);
-        }
+        // Default Room Update
+        if (msg.id) updateUI(msg);
     };
 
-    socket.onclose = (e) => {
+    socket.onclose = () => {
         if (!document.getElementById('game-screen').classList.contains('hidden')) {
-            alert('CONNECTION LOST');
+            alert("CONNECTION LOST");
             window.location.reload();
         }
     };
+}
+
+function updateUI(room) {
+    document.getElementById('centered-room-id').innerText = room.id;
+    document.getElementById('clean-sweep-banner').classList.add('hidden');
+    
+    const table = document.getElementById('table-area');
+    table.innerHTML = '';
+
+    Object.values(room.participants).forEach(p => {
+        const isMe = p.id === myId;
+        if (isMe) isHost = p.isHost;
+
+        const playerDiv = document.createElement('div');
+        playerDiv.className = 'flex flex-col items-center space-y-3';
+        
+        let cardVisual = '';
+        if (p.vote) {
+            if (room.isRevealed) {
+                const foilClass = p.isFoil ? 'card-foil' : 'bg-white text-black';
+                cardVisual = `<div class="w-20 h-28 border-4 border-[#E30613] rounded-lg flex items-center justify-center pixel-font text-3xl shadow-[0_0_15px_#E30613] ${foilClass} card-reveal">${p.vote}</div>`;
+            } else {
+                cardVisual = `
+                    <div class="w-20 h-28 bg-black border-4 border-gray-600 rounded-lg flex items-center justify-center shadow-lg relative overflow-hidden">
+                        <div class="absolute w-full h-full flex items-center justify-center opacity-20">
+                            <span class="pixel-font text-[#E30613] text-4xl">A</span>
+                        </div>
+                        ${p.isAllIn ? '<span class="text-[#E30613] font-bold text-[10px] absolute top-2 blink">ALL IN</span>' : '✅'}
+                    </div>`;
+            }
+        } else {
+            cardVisual = `<div class="w-20 h-28 border-2 border-dashed border-gray-700 rounded-lg flex items-center justify-center text-gray-700 pixel-font text-[10px]">...</div>`;
+        }
+
+        playerDiv.innerHTML = `
+            ${cardVisual}
+            <div class="pixel-font text-[10px] text-center ${p.isHost ? 'text-[#E30613]' : 'text-white'}">
+                ${p.name}${p.isHost ? ' [MASTER]' : ''}
+            </div>
+        `;
+        table.appendChild(playerDiv);
+    });
+
+    // Host Controls
+    if (isHost) {
+        document.getElementById('btn-reveal').classList.remove('hidden');
+        document.getElementById('btn-reset').classList.remove('hidden');
+        document.getElementById('my-deck').classList.add('hidden');
+        document.getElementById('btn-allin').parentElement.classList.add('hidden');
+    } else {
+        document.getElementById('btn-reveal').classList.add('hidden');
+        document.getElementById('btn-reset').classList.add('hidden');
+        document.getElementById('my-deck').classList.remove('hidden');
+        document.getElementById('btn-allin').parentElement.classList.remove('hidden');
+    }
+
+    // Selected state for my deck
+    if (!room.isRevealed) {
+        const myP = room.participants[myId];
+        document.querySelectorAll('.poker-card').forEach(btn => {
+            if (myP && myP.vote === btn.dataset.value) btn.classList.add('selected');
+            else btn.classList.remove('selected');
+        });
+    } else {
+        document.querySelectorAll('.poker-card').forEach(btn => btn.classList.remove('selected'));
+    }
 }
 
 function send(data) {
@@ -107,73 +156,46 @@ function send(data) {
     }
 }
 
-function updateUI(room) {
-    const participantsGrid = document.getElementById('participants');
-    participantsGrid.innerHTML = '';
-    
-    Object.values(room.participants).forEach(p => {
-        const isMe = p.id === myId;
-        
-        if (isMe) {
-            isHost = p.isHost;
-        }
+function sendVote(val) {
+    send({ type: "vote", vote: val, isAllIn: isAllInMode });
+}
 
-        const div = document.createElement('div');
-        div.id = `participant-${p.id}`;
-        div.className = `participant-card ${p.vote ? 'voted' : ''} ${p.isFoil ? 'foil-card' : ''}`;
-        
-        if (room.isRevealed && p.vote) {
-            div.classList.add('reveal-animation');
-            div.classList.add('revealed');
-        }
-        
-        let voteContent = '';
-        if (room.isRevealed) {
-            voteContent = `<div class="vote-value">${p.vote || '-'}</div>`;
-        } else {
-            voteContent = p.vote ? `<div class="vote-hidden"></div>` : `<div class="vote-value">-</div>`;
-        }
-        
-        const nameLabel = p.isHost ? `${p.name} [MASTER] 👑` : p.name;
+function sendReveal() { send({ type: "reveal" }); }
+function sendReset() { send({ type: "reset" }); }
+function sendReaction(emoji) { send({ type: "reaction", reaction: emoji }); }
 
-        div.innerHTML = `
-            ${p.isHost ? '<div class="vote-value" style="font-size:1rem; color:#666;">MASTER</div>' : voteContent}
-            <div class="participant-name">${nameLabel}</div>
-        `;
-        participantsGrid.appendChild(div);
-
-        if (isMe) {
-            if (isHost) {
-                document.getElementById('host-controls').classList.remove('hidden');
-                document.querySelector('.cards-container').classList.add('hidden');
-            } else {
-                document.getElementById('host-controls').classList.add('hidden');
-                document.querySelector('.cards-container').classList.remove('hidden');
-            }
-        }
-    });
-
-    if (!room.isRevealed && Object.values(room.participants).every(p => !p.vote)) {
-        document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+function toggleAllIn() {
+    isAllInMode = !isAllInMode;
+    const btn = document.getElementById('btn-allin');
+    if (isAllInMode) {
+        btn.className = 'bg-[#E30613] border-2 border-[#E30613] text-white px-4 py-2 pixel-font text-xs font-bold shadow-[0_0_10px_#E30613] transition';
+        btn.innerText = 'ALL-IN MODE: ON';
+    } else {
+        btn.className = 'bg-black border-2 border-gray-600 text-gray-400 px-4 py-2 pixel-font text-xs transition';
+        btn.innerText = 'ALL-IN MODE: OFF';
     }
 }
 
-function triggerReaction(emoji) {
-    const el = document.createElement('div');
-    el.className = 'floating-emoji';
-    el.innerText = emoji;
-    el.style.left = Math.random() * 80 + 10 + '%';
-    el.style.bottom = '0';
-    document.getElementById('animation-layer').appendChild(el);
-    setTimeout(() => el.remove(), 2000);
+function triggerScreenShake() {
+    document.body.classList.add('shake');
+    setTimeout(() => document.body.classList.remove('shake'), 500);
 }
 
-function triggerCleanSweep() {
-    const overlay = document.getElementById('sweep-overlay');
-    overlay.classList.remove('hidden');
+function spawnReaction(emoji) {
+    const el = document.createElement('div');
+    el.className = 'reaction-emoji';
+    el.innerText = emoji;
+    el.style.left = Math.random() * 80 + 10 + 'vw';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+function triggerCleanSweep(val) {
+    const banner = document.getElementById('clean-sweep-banner');
+    banner.classList.remove('hidden');
     document.body.classList.add('consensus-pulse');
+    triggerScreenShake();
     setTimeout(() => {
-        overlay.classList.add('hidden');
         document.body.classList.remove('consensus-pulse');
     }, 3000);
 }
@@ -181,13 +203,10 @@ function triggerCleanSweep() {
 window.addEventListener('keydown', (e) => {
     if (document.getElementById('game-screen').classList.contains('hidden')) return;
     if (e.key >= '1' && e.key <= '9') {
-        const values = ['1', '2', '3', '5', '8', '13', '21', '34', '55'];
+        const values = ["1", "2", "3", "5", "8", "13", "21", "34", "55"];
         const val = values[parseInt(e.key) - 1];
-        if (val) {
-            const card = document.querySelector(`.card[data-value="${val}"]`);
-            if (card) card.click();
-        }
+        if (val) sendVote(val);
     }
-    if (e.key === ' ' && isHost) { send({type: 'reveal'}); e.preventDefault(); }
-    if (e.key === 'Escape' && isHost) { send({type: 'reset'}); }
+    if (e.key === ' ' && isHost) { sendReveal(); e.preventDefault(); }
+    if (e.key === 'Escape' && isHost) { sendReset(); }
 });
