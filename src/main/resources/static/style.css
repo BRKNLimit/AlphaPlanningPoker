@@ -71,12 +71,39 @@ body {
     40%, 60% { transform: translate3d(8px, -6px, 0); }
 }
 
+.reaction-btn {
+    background: rgba(17, 24, 39, 0.8);
+    border: 2px solid #374151;
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.2s;
+    min-width: 80px;
+}
+
+.reaction-btn:hover {
+    border-color: var(--alpha-red);
+    box-shadow: 0 0 15px rgba(227, 6, 19, 0.4);
+    background: rgba(31, 41, 55, 0.9);
+}
+
+.pixel-emoji {
+    display: inline-block;
+    image-rendering: pixelated;
+    /* This filter chain makes standard emojis look high-contrast, red and white */
+    filter: grayscale(1) brightness(0.8) contrast(2) sepia(1) hue-rotate(-50deg) saturate(10) brightness(1.2);
+}
+
 /* Floating Reactions */
 .reaction-emoji {
     position: fixed; bottom: -50px;
     font-size: 3rem; pointer-events: none;
     animation: floatUp 3s ease-out forwards;
     z-index: 1000;
+    image-rendering: pixelated;
+    filter: grayscale(1) brightness(0.8) contrast(2) sepia(1) hue-rotate(-50deg) saturate(10) brightness(1.2);
 }
 @keyframes floatUp {
     0% { transform: translateY(0) rotate(0deg); opacity: 1; }

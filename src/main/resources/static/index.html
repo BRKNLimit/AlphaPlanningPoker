@@ -70,11 +70,23 @@
         </main>
 
         <footer class="p-6 bg-gradient-to-t from-black to-transparent flex flex-col items-center">
-            <div class="flex space-x-4 mb-6">
-                <button onclick="sendReaction('🤡')" class="text-3xl hover:scale-125 transition">🤡</button>
-                <button onclick="sendReaction('💀')" class="text-3xl hover:scale-125 transition">💀</button>
-                <button onclick="sendReaction('🔥')" class="text-3xl hover:scale-125 transition">🔥</button>
-                <button onclick="sendReaction('☕')" class="text-3xl hover:scale-125 transition">☕</button>
+            <div class="flex space-x-6 mb-8">
+                <button onclick="sendReaction('🤡')" class="reaction-btn group">
+                    <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">🤡</span>
+                    <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Joker</span>
+                </button>
+                <button onclick="sendReaction('💀')" class="reaction-btn group">
+                    <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">💀</span>
+                    <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Death</span>
+                </button>
+                <button onclick="sendReaction('🔥')" class="reaction-btn group">
+                    <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">🔥</span>
+                    <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Hype</span>
+                </button>
+                <button onclick="sendReaction('☕')" class="reaction-btn group">
+                    <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">☕</span>
+                    <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Break</span>
+                </button>
             </div>
 
             <div class="flex space-x-8 items-center">
