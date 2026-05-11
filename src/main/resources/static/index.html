@@ -17,17 +17,32 @@
         <h2 class="pixel-font text-xl blink">INSERT COIN / PRESS START</h2>
     </div>
 
-    <div id="role-screen" class="hidden z-10 flex flex-col items-center space-y-8">
-        <h1 class="pixel-font text-3xl text-[#E30613]">CHOOSE YOUR DESTINY</h1>
-        <div class="bg-gray-900 p-8 rounded-lg border-2 border-[#E30613] w-96 flex flex-col space-y-4 shadow-[0_0_20px_rgba(227,6,19,0.3)]">
-            <input type="text" id="usernameInput" placeholder="YOUR NAME" class="bg-black text-white pixel-font text-sm p-4 border border-gray-700 focus:border-[#E30613] outline-none text-center uppercase">
-            <div class="flex space-x-2">
-                <button onclick="joinGame(true)" class="flex-1 bg-[#E30613] text-white pixel-font p-3 hover:bg-red-700 transition">HOST</button>
+    <div id="role-screen" class="hidden z-10 flex flex-col items-center space-y-12">
+        <h1 class="pixel-font text-3xl text-[#E30613] drop-shadow-[0_0_15px_#E30613]">CHOOSE YOUR DESTINY</h1>
+        
+        <div class="flex flex-col md:flex-row gap-8 items-stretch">
+            <!-- Host Card -->
+            <div class="bg-gray-900/80 p-8 rounded-lg border-2 border-[#E30613] w-80 flex flex-col space-y-6 shadow-[0_0_20px_rgba(227,6,19,0.2)] hover:shadow-[0_0_30px_rgba(227,6,19,0.4)] transition-all transform hover:-translate-y-2 group">
+                <div class="flex flex-col items-center space-y-4">
+                    <div class="text-5xl group-hover:scale-110 transition-transform">👑</div>
+                    <h2 class="pixel-font text-xl text-[#E30613]">HOST</h2>
+                    <p class="text-[10px] text-gray-400 text-center uppercase leading-relaxed">Lead the session as a Product Owner. Manage reveals and resets.</p>
+                </div>
+                <button onclick="joinGame(true)" class="w-full bg-[#E30613] text-white pixel-font text-xs p-4 hover:bg-red-700 transition shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none">START SESSION</button>
             </div>
-            <div class="flex space-x-2 items-center">
-                <span class="text-gray-500 font-bold">OR</span>
-                <input type="text" id="roomIdInput" placeholder="#XXXX" maxlength="5" class="flex-1 bg-black text-white pixel-font text-xs p-3 border border-gray-700 focus:border-[#E30613] outline-none text-center">
-                <button onclick="joinGame(false)" class="bg-gray-700 text-white pixel-font p-3 hover:bg-gray-600 transition">JOIN</button>
+
+            <!-- Join Card -->
+            <div class="bg-gray-900/80 p-8 rounded-lg border-2 border-gray-600 w-80 flex flex-col space-y-4 shadow-lg hover:border-[#E30613] hover:shadow-[0_0_30px_rgba(227,6,19,0.2)] transition-all transform hover:-translate-y-2 group">
+                <div class="flex flex-col items-center space-y-4">
+                    <div class="text-5xl group-hover:scale-110 transition-transform">🃏</div>
+                    <h2 class="pixel-font text-xl text-gray-300 group-hover:text-[#E30613]">PLAYER</h2>
+                    <p class="text-[10px] text-gray-400 text-center uppercase leading-relaxed">Join an existing session to provide estimates.</p>
+                </div>
+                <div class="flex flex-col space-y-3 pt-2">
+                    <input type="text" id="usernameInput" placeholder="YOUR NAME" class="bg-black text-white pixel-font text-[10px] p-4 border border-gray-800 focus:border-[#E30613] outline-none text-center uppercase">
+                    <input type="text" id="roomIdInput" placeholder="ROOM #XXXX" maxlength="5" class="bg-black text-white pixel-font text-[10px] p-4 border border-gray-800 focus:border-[#E30613] outline-none text-center">
+                    <button onclick="joinGame(false)" class="w-full bg-gray-700 text-white pixel-font text-xs p-4 hover:bg-gray-600 transition shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none">JOIN SESSION</button>
+                </div>
             </div>
         </div>
     </div>

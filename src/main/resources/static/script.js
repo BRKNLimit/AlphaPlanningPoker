@@ -40,7 +40,7 @@ function joinGame(host) {
     const room = document.getElementById('roomIdInput').value.trim();
     
     if (host) {
-        myUsername = "Master";
+        myUsername = "Product Owner";
         startSession("");
     } else {
         if (!name) return alert("ENTER YOUR NAME");
@@ -91,10 +91,14 @@ function updateUI(room) {
     const table = document.getElementById('table-area');
     table.innerHTML = '';
 
-    Object.values(room.participants).forEach(p => {
-        const isMe = p.id === myId;
-        if (isMe) isHost = p.isHost;
+    const participants = Object.values(room.participants);
+    
+    // Sync my own isHost status
+    const me = room.participants[myId];
+    if (me) isHost = me.isHost;
 
+    // Only show non-host participants in the table area
+    participants.filter(p => !p.isHost).forEach(p => {
         const playerDiv = document.createElement('div');
         playerDiv.className = 'flex flex-col items-center space-y-3';
         
@@ -118,8 +122,8 @@ function updateUI(room) {
 
         playerDiv.innerHTML = `
             ${cardVisual}
-            <div class="pixel-font text-[10px] text-center ${p.isHost ? 'text-[#E30613]' : 'text-white'}">
-                ${p.name}${p.isHost ? ' [MASTER]' : ''}
+            <div class="pixel-font text-[10px] text-center text-white">
+                ${p.name}
             </div>
         `;
         table.appendChild(playerDiv);
@@ -131,11 +135,13 @@ function updateUI(room) {
         document.getElementById('btn-reset').classList.remove('hidden');
         document.getElementById('my-deck').classList.add('hidden');
         document.getElementById('btn-allin').parentElement.classList.add('hidden');
+        document.getElementById('user-display').innerText = "PRODUCT OWNER";
     } else {
         document.getElementById('btn-reveal').classList.add('hidden');
         document.getElementById('btn-reset').classList.add('hidden');
         document.getElementById('my-deck').classList.remove('hidden');
         document.getElementById('btn-allin').parentElement.classList.remove('hidden');
+        document.getElementById('user-display').innerText = myUsername;
     }
 
     // Selected state for my deck
