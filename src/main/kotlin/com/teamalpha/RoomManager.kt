@@ -65,7 +65,7 @@ class RoomManager {
         
         p.vote = vote
         p.isAllIn = isAllIn
-        p.isFoil = (1..100).random() <= 5 // 5% Foil chance
+        p.isFoil = (1..1000).random() <= 75 // 7.5% Foil chance
         
         broadcast(roomId)
         
