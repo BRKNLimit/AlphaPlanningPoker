@@ -44,20 +44,14 @@ class RoomManager {
         return id
     }
 
-    suspend fun vote(roomId: String, pId: String, vote: String, wager: Int, isAllIn: Boolean) {
+    suspend fun vote(roomId: String, pId: String, vote: String) {
         val room = rooms[roomId] ?: return
         val p = room.participants[pId] ?: return
         
         p.vote = vote
-        p.currentWager = wager
-        p.isAllIn = isAllIn
-        p.isFoil = (1..100).random() == 1 // 1% Foil chance
+        p.isFoil = (1..100).random() <= 5 // 5% Foil chance
         
         broadcast(roomId)
-        
-        if (isAllIn) {
-            broadcastRaw(roomId, """{"type":"allInSlam","pId":"$pId"}""")
-        }
     }
 
     suspend fun reaction(roomId: String, reaction: String) {
@@ -68,7 +62,7 @@ class RoomManager {
         val room = rooms[roomId] ?: return
         room.isRevealed = true
         
-        // Calculate consensus and payouts (Exclude Hosts)
+        // Calculate consensus (Exclude Hosts)
         val voters = room.participants.values.filter { !it.isHost }
         val votes = voters.mapNotNull { it.vote }
         
@@ -79,16 +73,6 @@ class RoomManager {
             room.consensusValue = null
         }
 
-        // Handle Gambling Payouts (Exclude Hosts)
-        val winningVote = votes.groupBy { it }.maxByOrNull { it.value.size }?.key
-        voters.forEach { p ->
-            if (p.vote == winningVote && winningVote != null) {
-                p.chips += p.currentWager * 2
-            } else {
-                p.chips -= p.currentWager
-            }
-        }
-        
         broadcast(roomId)
     }
 
