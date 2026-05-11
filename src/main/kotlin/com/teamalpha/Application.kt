@@ -2,11 +2,11 @@ package com.teamalpha
 
 import com.teamalpha.plugins.configureRouting
 import com.teamalpha.plugins.configureSockets
-import com.teamalpha.plugins.configureSecurity
-import com.teamalpha.plugins.configureSerialization
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.plugins.contentnegotiation.*
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
@@ -15,10 +15,10 @@ fun main() {
 
 fun Application.module() {
     val roomManager = RoomManager()
-    val userManager = UserManager()
     
-    configureSerialization()
-    configureSecurity()
+    install(ContentNegotiation) {
+        json()
+    }
     configureSockets()
-    configureRouting(roomManager, userManager)
+    configureRouting(roomManager)
 }

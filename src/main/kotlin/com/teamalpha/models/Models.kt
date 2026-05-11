@@ -1,36 +1,7 @@
 package com.teamalpha.models
 
-import io.ktor.server.auth.*
 import io.ktor.server.websocket.*
 import kotlinx.serialization.Serializable
-
-@Serializable
-enum class UserStatus { PENDING, APPROVED }
-
-@Serializable
-data class User(
-    val username: String,
-    val passwordHash: String,
-    var status: UserStatus = UserStatus.PENDING,
-    val isAdmin: Boolean = false
-)
-
-@Serializable
-data class UserDTO(
-    val username: String,
-    val status: UserStatus,
-    val isAdmin: Boolean
-)
-
-@Serializable
-data class UserSession(val username: String) : Principal
-
-@Serializable
-data class AuthResponse(
-    val status: String,
-    val isAdmin: Boolean = false,
-    val message: String? = null
-)
 
 @Serializable
 data class Participant(
@@ -38,17 +9,14 @@ data class Participant(
     val name: String,
     var vote: String? = null,
     val isHost: Boolean = false,
-    var chips: Int = 10,
-    var currentWager: Int = 0,
-    var isFoil: Boolean = false,
-    var isAllIn: Boolean = false
+    var isFoil: Boolean = false
 )
 
 @Serializable
 data class Room(
     val id: String,
     val name: String,
-    val participants: MutableMap<String, Participant> = mutableMapOf(),
+    val participants: Map<String, Participant>,
     var isRevealed: Boolean = false,
     var consensusValue: String? = null
 )
@@ -57,14 +25,8 @@ data class Room(
 data class ClientMessage(
     val type: String? = null,
     val roomId: String? = null,
-    val name: String? = null,
     val vote: String? = null,
     val username: String? = null,
-    val password: String? = null,
-    val targetUsername: String? = null,
-    val chips: Int? = null,
-    val wager: Int? = null,
-    val isAllIn: Boolean? = null,
     val reaction: String? = null,
     val emoji: String? = null,
     val pId: String? = null,
