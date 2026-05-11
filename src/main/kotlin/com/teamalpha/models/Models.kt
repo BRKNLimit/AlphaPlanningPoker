@@ -10,7 +10,8 @@ data class Participant(
     val isHost: Boolean = false,
     var vote: String? = null,
     var isAllIn: Boolean = false,
-    var isFoil: Boolean = false
+    var isFoil: Boolean = false,
+    var consecutiveThirteens: Int = 0
 )
 
 @Serializable

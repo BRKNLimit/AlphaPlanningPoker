@@ -63,9 +63,23 @@ class RoomManager {
         val room = rooms[roomId] ?: return
         val p = room.participants[pId] ?: return
         
+        // Track consecutive '13's
+        if (vote == "13") {
+            p.consecutiveThirteens++
+        } else {
+            p.consecutiveThirteens = 0
+        }
+
         p.vote = vote
         p.isAllIn = isAllIn
-        p.isFoil = (1..1000).random() <= 75 // 7.5% Foil chance
+        
+        // 7.5% random foil, or guaranteed if 3rd '13' in a row
+        if (p.consecutiveThirteens >= 3 && vote == "13") {
+            p.isFoil = true
+            p.consecutiveThirteens = 0 // Reset after guarantee
+        } else {
+            p.isFoil = (1..1000).random() <= 75
+        }
         
         broadcast(roomId)
         
