@@ -65,7 +65,10 @@ data class ClientMessage(
     val chips: Int? = null,
     val wager: Int? = null,
     val isAllIn: Boolean? = null,
-    val reaction: String? = null
+    val reaction: String? = null,
+    val emoji: String? = null,
+    val pId: String? = null,
+    val yourId: String? = null
 )
 
 class Connection(val session: DefaultWebSocketServerSession) {

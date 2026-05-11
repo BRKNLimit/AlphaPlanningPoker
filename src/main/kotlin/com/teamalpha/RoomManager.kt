@@ -12,6 +12,12 @@ class RoomManager {
     private val rooms = ConcurrentHashMap<String, Room>() // ID to Room
     private val nameToId = ConcurrentHashMap<String, String>() // Name to ID
     private val connections = ConcurrentHashMap<String, MutableSet<Connection>>()
+    
+    private val json = Json { 
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        coerceInputValues = true
+    }
 
     suspend fun join(connection: Connection, roomNameOrId: String, username: String, initialChips: Int) {
         var room = rooms[roomNameOrId] ?: rooms[nameToId[roomNameOrId]]
@@ -19,7 +25,7 @@ class RoomManager {
         if (room == null) {
             val id = generateUniqueId()
             val name = if (roomNameOrId.startsWith("#")) "New Room" else roomNameOrId
-            room = Room(id, name)
+            room = Room(id, name, participants = ConcurrentHashMap())
             rooms[id] = room
             nameToId[name] = id
         }
@@ -33,6 +39,12 @@ class RoomManager {
         connection.roomId = room.id
         
         connections.computeIfAbsent(room.id) { CopyOnWriteArraySet() }.add(connection)
+        
+        // Send welcome to the joining client
+        try {
+            connection.session.send(Frame.Text(json.encodeToString(ClientMessage(type = "welcome", yourId = pId))))
+        } catch (e: Exception) {}
+        
         broadcast(room.id)
     }
 
@@ -55,7 +67,7 @@ class RoomManager {
     }
 
     suspend fun reaction(roomId: String, reaction: String) {
-        broadcastRaw(roomId, """{"type":"reaction","emoji":"$reaction"}""")
+        broadcastRaw(roomId, json.encodeToString(ClientMessage(type = "reaction", emoji = reaction)))
     }
 
     suspend fun reveal(roomId: String) {
@@ -68,7 +80,7 @@ class RoomManager {
         
         if (votes.isNotEmpty() && votes.all { it == votes[0] }) {
             room.consensusValue = votes[0]
-            broadcastRaw(roomId, """{"type":"cleanSweep","value":"${votes[0]}"}""")
+            broadcastRaw(roomId, json.encodeToString(ClientMessage(type = "cleanSweep", vote = votes[0])))
         } else {
             room.consensusValue = null
         }
@@ -103,9 +115,12 @@ class RoomManager {
             connections.remove(roomId)
         } else {
             if (room.participants.values.none { it.isHost }) {
-                val nextHost = room.participants.values.firstOrNull()
-                if (nextHost != null) {
-                    room.participants[nextHost.id] = nextHost.copy(isHost = true)
+                val nextHostId = room.participants.keys.firstOrNull()
+                if (nextHostId != null) {
+                    val p = room.participants[nextHostId]
+                    if (p != null) {
+                        room.participants[nextHostId] = p.copy(isHost = true)
+                    }
                 }
             }
             broadcast(roomId)
@@ -114,7 +129,7 @@ class RoomManager {
 
     private suspend fun broadcast(roomId: String) {
         val room = rooms[roomId] ?: return
-        val message = Json.encodeToString(room)
+        val message = json.encodeToString(room)
         broadcastRaw(roomId, message)
     }
 
@@ -122,7 +137,9 @@ class RoomManager {
         connections[roomId]?.forEach { 
             try {
                 it.session.send(Frame.Text(message))
-            } catch (e: Exception) {}
+            } catch (e: Exception) {
+                // Connection might be dead
+            }
         }
     }
 }

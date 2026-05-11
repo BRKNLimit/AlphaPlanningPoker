@@ -1,5 +1,6 @@
 let socket = null;
 let isHost = false;
+let myId = "";
 let myUsername = "Player_" + Math.floor(Math.random() * 1000);
 
 const screens = ['start-screen', 'role-screen', 'game-screen'];
@@ -73,6 +74,10 @@ function joinRoom(roomId) {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
+        if (data.type === 'welcome') {
+            myId = data.yourId;
+            return;
+        }
         if (data.type === 'reaction') return triggerReaction(data.emoji);
         if (data.type === 'cleanSweep') return triggerCleanSweep();
 
@@ -103,10 +108,8 @@ function updateUI(room) {
     participantsGrid.innerHTML = '';
     
     Object.values(room.participants).forEach(p => {
-        const isMe = p.name === myUsername;
+        const isMe = p.id === myId;
         
-        // The first person in a new room is automatically host
-        // We sync our local isHost with the server's participant state
         if (isMe) {
             isHost = p.isHost;
         }
