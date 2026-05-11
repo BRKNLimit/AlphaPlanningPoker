@@ -186,6 +186,15 @@ header {
     gap: 10px;
 }
 
+.centered-room-display {
+    text-align: center;
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin-bottom: 20px;
+    letter-spacing: 4px;
+    text-shadow: var(--neon-glow);
+}
+
 .auth-box {
     background-color: var(--bg-card);
     padding: 50px;

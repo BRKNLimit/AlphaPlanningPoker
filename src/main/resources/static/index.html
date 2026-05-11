@@ -14,10 +14,6 @@
     <header>
         <div class="logo" style="color: var(--primary); font-weight: bold;">TEAM ALPHA</div>
         <div class="header-right">
-            <div id="room-info" class="room-info hidden" style="display: flex; gap: 20px; align-items: center;">
-                <div id="room-name-display" class="room-name">NAME</div>
-                <div id="room-id-display" class="room-id" style="font-family: monospace;">#0000</div>
-            </div>
             <div id="user-display" class="room-id">PLAYER</div>
         </div>
     </header>
@@ -42,6 +38,7 @@
             <div class="role-option" id="join-opt">
                 <h2>JOIN</h2>
                 <div class="join-input-group">
+                    <input type="text" id="username-input" placeholder="YOUR NAME" maxlength="15" style="margin-bottom: 10px; width: 100%;">
                     <input type="text" id="room-input" placeholder="#XXXX" maxlength="5" style="margin-bottom: 10px; width: 100%;">
                     <button id="join-btn" style="padding: 10px;">ENTER</button>
                 </div>
@@ -51,6 +48,8 @@
 
     <!-- Game Screen -->
     <main id="game-screen" class="hidden">
+        <div id="centered-room-id" class="centered-room-display">#0000</div>
+        
         <div class="reactions-bar" style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
             <button class="reaction-btn" data-emoji="🤡" style="width:auto; padding:5px 10px;">🤡</button>
             <button class="reaction-btn" data-emoji="💀" style="width:auto; padding:5px 10px;">💀</button>

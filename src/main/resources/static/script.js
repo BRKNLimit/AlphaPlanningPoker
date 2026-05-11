@@ -22,13 +22,18 @@ document.getElementById('start-coin').addEventListener('click', function() {
 
 document.getElementById('host-opt').addEventListener('click', () => {
     isHost = true;
+    myUsername = "Master";
     joinRoom("NEW_SESSION");
 });
 
 document.getElementById('join-btn').addEventListener('click', () => {
     const roomId = document.getElementById('room-input').value.trim();
+    const chosenName = document.getElementById('username-input').value.trim();
     if (!roomId) return alert("ENTER ROOM CODE");
+    if (!chosenName) return alert("ENTER YOUR NAME");
+    
     isHost = false;
+    myUsername = chosenName;
     joinRoom(roomId);
 });
 
@@ -67,7 +72,6 @@ function joinRoom(roomId) {
     socket.onopen = () => {
         send({type: 'join', roomId, username: myUsername});
         showScreen('game-screen');
-        document.getElementById('room-info').classList.remove('hidden');
         document.getElementById('user-display').innerText = myUsername;
     };
 
@@ -83,8 +87,8 @@ function joinRoom(roomId) {
 
         // Room Update
         if (data.id && data.name) {
-            document.getElementById('room-name-display').innerText = data.name.toUpperCase();
-            document.getElementById('room-id-display').innerText = data.id;
+            const roomIdEl = document.getElementById('centered-room-id');
+            if (roomIdEl) roomIdEl.innerText = data.id;
             updateUI(data);
         }
     };
