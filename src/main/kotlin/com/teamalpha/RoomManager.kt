@@ -12,8 +12,8 @@ class RoomManager {
     private val rooms = ConcurrentHashMap<String, Room>()
     private val nameToId = ConcurrentHashMap<String, String>()
     private val connections = ConcurrentHashMap<String, MutableSet<Connection>>()
-    
-    private val json = Json { 
+
+    private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
     }
@@ -21,9 +21,9 @@ class RoomManager {
     suspend fun join(connection: Connection, roomNameOrId: String, username: String) {
         val input = roomNameOrId.trim()
         val isHosting = input.isEmpty() || input == "NEW_SESSION"
-        
+
         var room = if (!isHosting) rooms[input] ?: nameToId[input]?.let { rooms[it] } else null
-        
+
         if (room == null) {
             val id = generateUniqueId()
             val name = if (isHosting) "Alpha Session" else input
@@ -35,19 +35,19 @@ class RoomManager {
         val pId = UUID.randomUUID().toString()
         val isHost = room.participants.isEmpty()
         val participant = Participant(pId, username, isHost = isHost)
-        
+
         room.participants[pId] = participant
         connection.participantId = pId
         connection.roomId = room.id
         connection.username = username
-        
+
         connections.computeIfAbsent(room.id) { CopyOnWriteArraySet() }.add(connection)
-        
+
         // Send welcome to the joining client
         try {
             connection.session.send(Frame.Text(json.encodeToString(ClientMessage(type = "welcome", yourId = pId))))
         } catch (e: Exception) {}
-        
+
         broadcast(room.id)
     }
 
@@ -62,7 +62,7 @@ class RoomManager {
     suspend fun vote(roomId: String, pId: String, vote: String, isAllIn: Boolean) {
         val room = rooms[roomId] ?: return
         val p = room.participants[pId] ?: return
-        
+
         // Track consecutive '13's
         if (vote == "13") {
             p.consecutiveThirteens++
@@ -72,7 +72,7 @@ class RoomManager {
 
         p.vote = vote
         p.isAllIn = isAllIn
-        
+
         // 7.5% random foil, or guaranteed if 3rd '13' in a row
         if (p.consecutiveThirteens >= 3 && vote == "13") {
             p.isFoil = true
@@ -80,9 +80,9 @@ class RoomManager {
         } else {
             p.isFoil = (1..1000).random() <= 75
         }
-        
+
         broadcast(roomId)
-        
+
         if (isAllIn) {
             broadcastRaw(roomId, json.encodeToString(ClientMessage(type = "allInSlam")))
         }
@@ -95,17 +95,17 @@ class RoomManager {
     suspend fun reveal(roomId: String) {
         val room = rooms[roomId] ?: return
         room.isRevealed = true
-        
+
         val voters = room.participants.values.filter { !it.isHost }
         val votes = voters.mapNotNull { it.vote }
-        
+
         if (votes.isNotEmpty() && votes.all { it == votes[0] }) {
             room.consensusValue = votes[0]
             broadcastRaw(roomId, json.encodeToString(ClientMessage(type = "cleanSweep", vote = votes[0])))
         } else {
             room.consensusValue = null
         }
-        
+
         broadcast(roomId)
     }
 
@@ -113,8 +113,8 @@ class RoomManager {
         val room = rooms[roomId] ?: return
         room.isRevealed = false
         room.consensusValue = null
-        room.participants.values.forEach { 
-            it.vote = null 
+        room.participants.values.forEach {
+            it.vote = null
             it.isAllIn = false
             it.isFoil = false
         }
@@ -127,10 +127,10 @@ class RoomManager {
 
         val pId = connection.participantId
         val room = rooms[roomId] ?: return
-        
+
         room.participants.remove(pId)
         connections[roomId]?.remove(connection)
-        
+
         if (room.participants.isEmpty()) {
             rooms.remove(roomId)
             nameToId.remove(room.name)
@@ -156,7 +156,7 @@ class RoomManager {
     }
 
     private suspend fun broadcastRaw(roomId: String, message: String) {
-        connections[roomId]?.forEach { 
+        connections[roomId]?.forEach {
             try {
                 it.session.send(Frame.Text(message))
             } catch (e: Exception) {}

@@ -15,8 +15,8 @@ body {
 /* CRT Overlay */
 .crt-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-                linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
     background-size: 100% 4px, 3px 100%;
     pointer-events: none;
     z-index: 9999;
@@ -50,13 +50,13 @@ body {
 
 .card-foil {
     background: linear-gradient(
-        110deg,
-        #cfd8dc 0%,
-        #ffffff 20%,
-        #90a4ae 40%,
-        #ffffff 60%,
-        #cfd8dc 80%,
-        #ffffff 100%
+            110deg,
+            #cfd8dc 0%,
+            #ffffff 20%,
+            #90a4ae 40%,
+            #ffffff 60%,
+            #cfd8dc 80%,
+            #ffffff 100%
     );
     background-size: 200% 200%;
     animation: silver-holo 3s linear infinite, holo-shimmer 2s ease-in-out infinite alternate;
@@ -75,12 +75,12 @@ body {
     width: 400%;
     height: 400%;
     background: repeating-linear-gradient(
-        45deg,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.2) 5%,
-        rgba(255, 255, 255, 0) 10%,
-        rgba(255, 0, 0, 0.1) 15%,
-        rgba(255, 255, 255, 0) 20%
+            45deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.2) 5%,
+            rgba(255, 255, 255, 0) 10%,
+            rgba(255, 0, 0, 0.1) 15%,
+            rgba(255, 255, 255, 0) 20%
     );
     animation: foil-glint 4s linear infinite;
     pointer-events: none;

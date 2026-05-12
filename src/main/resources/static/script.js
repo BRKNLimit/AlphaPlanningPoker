@@ -39,7 +39,7 @@ fibonacci.forEach(val => {
 function joinGame(host) {
     const name = document.getElementById('usernameInput').value.trim();
     const room = document.getElementById('roomIdInput').value.trim();
-    
+
     if (host) {
         myUsername = "Product Owner";
         startSession("");
@@ -67,7 +67,7 @@ function startSession(roomId) {
 
     socket.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        
+
         if (msg.type === "welcome") { myId = msg.yourId; return; }
         if (msg.type === "allInSlam") { triggerScreenShake(); return; }
         if (msg.type === "reaction") { spawnReaction(msg.emoji); return; }
@@ -88,12 +88,12 @@ function startSession(roomId) {
 function updateUI(room) {
     document.getElementById('centered-room-id').innerText = room.id;
     document.getElementById('clean-sweep-banner').classList.add('hidden');
-    
+
     const table = document.getElementById('table-area');
     table.innerHTML = '';
 
     const participants = Object.values(room.participants);
-    
+
     // Sync my own isHost status
     const me = room.participants[myId];
     if (me) isHost = me.isHost;
@@ -102,7 +102,7 @@ function updateUI(room) {
     participants.filter(p => !p.isHost).forEach(p => {
         const playerDiv = document.createElement('div');
         playerDiv.className = 'flex flex-col items-center space-y-3';
-        
+
         let cardVisual = '';
         if (p.vote) {
             if (room.isRevealed) {
@@ -165,9 +165,9 @@ function send(data) {
 
 function sendVote(val) {
     if (isAllInMode && allInCooldown > 0) return alert(`COOLDOWN ACTIVE: ${Math.ceil(allInCooldown / 60)}m`);
-    
+
     send({ type: "vote", vote: val, isAllIn: isAllInMode });
-    
+
     if (isAllInMode) {
         startAllInCooldown();
         toggleAllIn(); // Auto-off after use
@@ -178,13 +178,13 @@ function startAllInCooldown() {
     allInCooldown = 180; // 3 minutes
     const btn = document.getElementById('btn-allin');
     btn.disabled = true;
-    
+
     const interval = setInterval(() => {
         allInCooldown--;
         const mins = Math.floor(allInCooldown / 60);
         const secs = allInCooldown % 60;
         btn.innerText = `COOLDOWN: ${mins}:${secs.toString().padStart(2, '0')}`;
-        
+
         if (allInCooldown <= 0) {
             clearInterval(interval);
             btn.disabled = false;

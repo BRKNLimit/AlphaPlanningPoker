@@ -15,7 +15,7 @@ fun main() {
 
 fun Application.module() {
     val roomManager = RoomManager()
-    
+
     install(ContentNegotiation) {
         json()
     }

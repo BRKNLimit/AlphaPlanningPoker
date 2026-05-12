@@ -9,99 +9,99 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-center relative">
-    <div class="crt-overlay"></div>
+<div class="crt-overlay"></div>
 
-    <div id="start-screen" class="z-10 flex flex-col items-center text-center space-y-8">
-        <div class="pixel-coin mb-4" id="start-coin"></div>
-        <h1 class="pixel-font text-5xl text-[#E30613] drop-shadow-[0_0_10px_rgba(227,6,19,0.8)]">TEAM ALPHA</h1>
-        <h2 class="pixel-font text-xl blink">INSERT COIN / PRESS START</h2>
-    </div>
+<div id="start-screen" class="z-10 flex flex-col items-center text-center space-y-8">
+    <div class="pixel-coin mb-4" id="start-coin"></div>
+    <h1 class="pixel-font text-5xl text-[#E30613] drop-shadow-[0_0_10px_rgba(227,6,19,0.8)]">TEAM ALPHA</h1>
+    <h2 class="pixel-font text-xl blink">INSERT COIN / PRESS START</h2>
+</div>
 
-    <div id="role-screen" class="hidden z-10 flex flex-col items-center space-y-12">
-        <h1 class="pixel-font text-3xl text-[#E30613] drop-shadow-[0_0_15px_#E30613]">CHOOSE YOUR DESTINY</h1>
-        
-        <div class="flex flex-col md:flex-row gap-8 items-stretch">
-            <!-- Host Card -->
-            <div class="bg-gray-900/80 p-8 rounded-lg border-2 border-[#E30613] w-80 flex flex-col space-y-6 shadow-[0_0_20px_rgba(227,6,19,0.2)] hover:shadow-[0_0_30px_rgba(227,6,19,0.4)] transition-all transform hover:-translate-y-2 group">
-                <div class="flex flex-col items-center space-y-4">
-                    <div class="text-5xl group-hover:scale-110 transition-transform">👑</div>
-                    <h2 class="pixel-font text-xl text-[#E30613]">HOST</h2>
-                    <p class="text-[10px] text-gray-400 text-center uppercase leading-relaxed">Lead the session as a Product Owner. Manage reveals and resets.</p>
-                </div>
-                <button onclick="joinGame(true)" class="w-full bg-[#E30613] text-white pixel-font text-xs p-4 hover:bg-red-700 transition shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none">START SESSION</button>
+<div id="role-screen" class="hidden z-10 flex flex-col items-center space-y-12">
+    <h1 class="pixel-font text-3xl text-[#E30613] drop-shadow-[0_0_15px_#E30613]">CHOOSE YOUR DESTINY</h1>
+
+    <div class="flex flex-col md:flex-row gap-8 items-stretch">
+        <!-- Host Card -->
+        <div class="bg-gray-900/80 p-8 rounded-lg border-2 border-[#E30613] w-80 flex flex-col space-y-6 shadow-[0_0_20px_rgba(227,6,19,0.2)] hover:shadow-[0_0_30px_rgba(227,6,19,0.4)] transition-all transform hover:-translate-y-2 group">
+            <div class="flex flex-col items-center space-y-4">
+                <div class="text-5xl group-hover:scale-110 transition-transform">👑</div>
+                <h2 class="pixel-font text-xl text-[#E30613]">HOST</h2>
+                <p class="text-[10px] text-gray-400 text-center uppercase leading-relaxed">Lead the session as a Product Owner. Manage reveals and resets.</p>
             </div>
+            <button onclick="joinGame(true)" class="w-full bg-[#E30613] text-white pixel-font text-xs p-4 hover:bg-red-700 transition shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none">START SESSION</button>
+        </div>
 
-            <!-- Join Card -->
-            <div class="bg-gray-900/80 p-8 rounded-lg border-2 border-gray-600 w-80 flex flex-col space-y-4 shadow-lg hover:border-[#E30613] hover:shadow-[0_0_30px_rgba(227,6,19,0.2)] transition-all transform hover:-translate-y-2 group">
-                <div class="flex flex-col items-center space-y-4">
-                    <div class="text-5xl group-hover:scale-110 transition-transform">🃏</div>
-                    <h2 class="pixel-font text-xl text-gray-300 group-hover:text-[#E30613]">PLAYER</h2>
-                    <p class="text-[10px] text-gray-400 text-center uppercase leading-relaxed">Join an existing session to provide estimates.</p>
-                </div>
-                <div class="flex flex-col space-y-3 pt-2">
-                    <input type="text" id="usernameInput" placeholder="YOUR NAME" class="bg-black text-white pixel-font text-[10px] p-4 border border-gray-800 focus:border-[#E30613] outline-none text-center uppercase">
-                    <input type="text" id="roomIdInput" placeholder="ROOM #XXXX" maxlength="5" class="bg-black text-white pixel-font text-[10px] p-4 border border-gray-800 focus:border-[#E30613] outline-none text-center">
-                    <button onclick="joinGame(false)" class="w-full bg-gray-700 text-white pixel-font text-xs p-4 hover:bg-gray-600 transition shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none">JOIN SESSION</button>
-                </div>
+        <!-- Join Card -->
+        <div class="bg-gray-900/80 p-8 rounded-lg border-2 border-gray-600 w-80 flex flex-col space-y-4 shadow-lg hover:border-[#E30613] hover:shadow-[0_0_30px_rgba(227,6,19,0.2)] transition-all transform hover:-translate-y-2 group">
+            <div class="flex flex-col items-center space-y-4">
+                <div class="text-5xl group-hover:scale-110 transition-transform">🃏</div>
+                <h2 class="pixel-font text-xl text-gray-300 group-hover:text-[#E30613]">PLAYER</h2>
+                <p class="text-[10px] text-gray-400 text-center uppercase leading-relaxed">Join an existing session to provide estimates.</p>
+            </div>
+            <div class="flex flex-col space-y-3 pt-2">
+                <input type="text" id="usernameInput" placeholder="YOUR NAME" class="bg-black text-white pixel-font text-[10px] p-4 border border-gray-800 focus:border-[#E30613] outline-none text-center uppercase">
+                <input type="text" id="roomIdInput" placeholder="ROOM #XXXX" maxlength="5" class="bg-black text-white pixel-font text-[10px] p-4 border border-gray-800 focus:border-[#E30613] outline-none text-center">
+                <button onclick="joinGame(false)" class="w-full bg-gray-700 text-white pixel-font text-xs p-4 hover:bg-gray-600 transition shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none">JOIN SESSION</button>
             </div>
         </div>
     </div>
+</div>
 
-    <div id="game-screen" class="hidden w-full h-full flex-col relative z-10">
-        <header class="flex justify-between items-center p-4 border-b border-gray-800 bg-black/50">
-            <div class="pixel-font text-[#E30613] text-xl">ALPHA POKER</div>
-            <div id="user-display" class="pixel-font text-xs text-gray-400">PLAYER</div>
-            <div class="flex space-x-4">
-                <button id="btn-reveal" onclick="sendReveal()" class="hidden bg-[#E30613] px-4 py-2 pixel-font text-xs hover:bg-red-700">REVEAL</button>
-                <button id="btn-reset" onclick="sendReset()" class="hidden bg-gray-700 px-4 py-2 pixel-font text-xs hover:bg-gray-600">RESET</button>
+<div id="game-screen" class="hidden w-full h-full flex-col relative z-10">
+    <header class="flex justify-between items-center p-4 border-b border-gray-800 bg-black/50">
+        <div class="pixel-font text-[#E30613] text-xl">ALPHA POKER</div>
+        <div id="user-display" class="pixel-font text-xs text-gray-400">PLAYER</div>
+        <div class="flex space-x-4">
+            <button id="btn-reveal" onclick="sendReveal()" class="hidden bg-[#E30613] px-4 py-2 pixel-font text-xs hover:bg-red-700">REVEAL</button>
+            <button id="btn-reset" onclick="sendReset()" class="hidden bg-gray-700 px-4 py-2 pixel-font text-xs hover:bg-gray-600">RESET</button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col items-center justify-start relative pt-8">
+        <div id="centered-room-id" class="pixel-font text-3xl text-[#E30613] mb-8 tracking-[4px] drop-shadow-[0_0_10px_#E30613]">#0000</div>
+
+        <div id="clean-sweep-banner" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pixel-font text-4xl text-[#E30613] animate-bounce drop-shadow-[0_0_20px_#E30613] text-center">
+            CLEAN ESTIMATE!<br><span class="text-xl">TEAM CONSENSUS</span>
+        </div>
+
+        <div id="table-area" class="flex flex-wrap justify-center gap-8 p-8 max-w-6xl w-full">
+            <!-- Participants here -->
+        </div>
+    </main>
+
+    <footer class="p-6 bg-gradient-to-t from-black to-transparent flex flex-col items-center">
+        <div class="flex space-x-6 mb-8">
+            <button onclick="sendReaction('🤡')" class="reaction-btn group">
+                <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">🤡</span>
+                <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Joker</span>
+            </button>
+            <button onclick="sendReaction('💀')" class="reaction-btn group">
+                <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">💀</span>
+                <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Death</span>
+            </button>
+            <button onclick="sendReaction('🔥')" class="reaction-btn group">
+                <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">🔥</span>
+                <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Hype</span>
+            </button>
+            <button onclick="sendReaction('☕')" class="reaction-btn group">
+                <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">☕</span>
+                <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Break</span>
+            </button>
+        </div>
+
+        <div class="flex space-x-8 items-center">
+            <div id="my-deck" class="flex space-x-2">
+                <!-- Fibonacci cards here -->
             </div>
-        </header>
 
-        <main class="flex-1 flex flex-col items-center justify-start relative pt-8">
-            <div id="centered-room-id" class="pixel-font text-3xl text-[#E30613] mb-8 tracking-[4px] drop-shadow-[0_0_10px_#E30613]">#0000</div>
-            
-            <div id="clean-sweep-banner" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pixel-font text-4xl text-[#E30613] animate-bounce drop-shadow-[0_0_20px_#E30613] text-center">
-                CLEAN ESTIMATE!<br><span class="text-xl">TEAM CONSENSUS</span>
+            <div class="pl-8 border-l border-gray-700 flex flex-col items-center">
+                <label class="pixel-font text-[10px] text-gray-400 mb-2">HIGH CONFIDENCE?</label>
+                <button id="btn-allin" onclick="toggleAllIn()" class="bg-black border-2 border-gray-600 text-gray-400 px-4 py-2 pixel-font text-xs transition">ALL-IN MODE: OFF</button>
             </div>
+        </div>
+    </footer>
+</div>
 
-            <div id="table-area" class="flex flex-wrap justify-center gap-8 p-8 max-w-6xl w-full">
-                <!-- Participants here -->
-            </div>
-        </main>
-
-        <footer class="p-6 bg-gradient-to-t from-black to-transparent flex flex-col items-center">
-            <div class="flex space-x-6 mb-8">
-                <button onclick="sendReaction('🤡')" class="reaction-btn group">
-                    <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">🤡</span>
-                    <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Joker</span>
-                </button>
-                <button onclick="sendReaction('💀')" class="reaction-btn group">
-                    <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">💀</span>
-                    <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Death</span>
-                </button>
-                <button onclick="sendReaction('🔥')" class="reaction-btn group">
-                    <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">🔥</span>
-                    <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Hype</span>
-                </button>
-                <button onclick="sendReaction('☕')" class="reaction-btn group">
-                    <span class="pixel-emoji text-3xl group-hover:scale-110 transition-transform">☕</span>
-                    <span class="block text-[8px] pixel-font text-gray-500 mt-1 uppercase">Break</span>
-                </button>
-            </div>
-
-            <div class="flex space-x-8 items-center">
-                <div id="my-deck" class="flex space-x-2">
-                    <!-- Fibonacci cards here -->
-                </div>
-                
-                <div class="pl-8 border-l border-gray-700 flex flex-col items-center">
-                    <label class="pixel-font text-[10px] text-gray-400 mb-2">HIGH CONFIDENCE?</label>
-                    <button id="btn-allin" onclick="toggleAllIn()" class="bg-black border-2 border-gray-600 text-gray-400 px-4 py-2 pixel-font text-xs transition">ALL-IN MODE: OFF</button>
-                </div>
-            </div>
-        </footer>
-    </div>
-
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>

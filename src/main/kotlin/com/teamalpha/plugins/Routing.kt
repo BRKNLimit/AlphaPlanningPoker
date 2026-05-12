@@ -18,7 +18,7 @@ fun Application.configureRouting(roomManager: RoomManager) {
 
         webSocket("/poker") {
             val connection = Connection(this)
-            
+
             try {
                 for (frame in incoming) {
                     if (frame is Frame.Text) {
