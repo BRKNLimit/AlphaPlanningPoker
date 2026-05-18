@@ -182,9 +182,9 @@ function send(data) {
 function sendVote(val) {
     if (isAllInMode && allInCooldown > 0) return alert(`COOLDOWN ACTIVE: ${Math.ceil(allInCooldown / 60)}m`);
 
-    // Check if already voted
-    if (lastRoomState && myId && lastRoomState.participants[myId] && lastRoomState.participants[myId].vote) {
-        return; // Prevent changing vote
+    // Only prevent voting if cards are already revealed
+    if (lastRoomState && lastRoomState.isRevealed) {
+        return; 
     }
 
     send({ type: "vote", vote: val, isAllIn: isAllInMode });
