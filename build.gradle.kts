@@ -36,6 +36,9 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
     
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
+    testImplementation("io.ktor:ktor-client-content-negotiation-jvm:$ktor_version")
+    testImplementation("io.ktor:ktor-client-websockets-jvm:$ktor_version")
+    testImplementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.0.0")
 }
 

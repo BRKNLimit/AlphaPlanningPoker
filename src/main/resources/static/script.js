@@ -5,6 +5,7 @@ let isHost = false;
 let myUsername = "";
 let isAllInMode = false;
 let allInCooldown = 0; // Cooldown in seconds
+let lastRoomState = null;
 
 const screens = ['start-screen', 'role-screen', 'game-screen'];
 
@@ -38,7 +39,7 @@ fibonacci.forEach(val => {
 
 function joinGame(host) {
     const name = document.getElementById('usernameInput').value.trim();
-    const room = document.getElementById('roomIdInput').value.trim();
+    let room = document.getElementById('roomIdInput').value.trim();
 
     if (host) {
         myUsername = "Product Owner";
@@ -46,6 +47,7 @@ function joinGame(host) {
     } else {
         if (!name) return alert("ENTER YOUR NAME");
         if (!room) return alert("ENTER ROOM CODE");
+        if (!room.startsWith('#')) room = '#' + room;
         myUsername = name;
         startSession(room);
     }
@@ -74,7 +76,10 @@ function startSession(roomId) {
         if (msg.type === "cleanSweep") { triggerCleanSweep(msg.vote); return; }
 
         // Default Room Update
-        if (msg.id) updateUI(msg);
+        if (msg.id) {
+            lastRoomState = msg;
+            updateUI(msg);
+        }
     };
 
     socket.onclose = () => {
@@ -86,13 +91,28 @@ function startSession(roomId) {
 }
 
 function updateUI(room) {
-    document.getElementById('centered-room-id').innerText = room.id;
-    document.getElementById('clean-sweep-banner').classList.add('hidden');
-
+    document.getElementById('header-room-id').innerText = room.id;
+    
+    // Only hide banner if not revealed (new round)
+    if (!room.isRevealed) {
+        document.getElementById('clean-sweep-banner').classList.add('hidden');
+    }
+    
     const table = document.getElementById('table-area');
     table.innerHTML = '';
 
     const participants = Object.values(room.participants);
+    
+    // Voting Progress
+    const voters = participants.filter(p => !p.isHost);
+    const votedCount = voters.filter(p => p.vote).length;
+    const totalVoters = voters.length;
+    
+    let statusText = "WAITING FOR PLAYERS";
+    if (totalVoters > 0) {
+        statusText = `${votedCount}/${totalVoters} VOTED`;
+    }
+    document.getElementById('user-display').innerText = `${myUsername} | ${statusText}`;
 
     // Sync my own isHost status
     const me = room.participants[myId];
@@ -106,19 +126,21 @@ function updateUI(room) {
         let cardVisual = '';
         if (p.vote) {
             if (room.isRevealed) {
-                const foilClass = p.isFoil ? 'card-foil' : 'bg-white text-black';
-                cardVisual = `<div class="w-20 h-28 border-4 border-[#E30613] rounded-lg flex items-center justify-center pixel-font text-3xl shadow-[0_0_15px_#E30613] ${foilClass} card-reveal">${p.vote}</div>`;
+                const foilClass = p.isFoil ? 'card-foil' : 'bg-white text-[#E30613]';
+                cardVisual = `<div class="w-20 h-28 border-4 border-[#E30613] rounded-sm flex items-center justify-center pixel-font text-3xl shadow-[0_0_15px_#E30613] ${foilClass} card-reveal">${p.vote}</div>`;
             } else {
+                const glowClass = 'shadow-[0_0_30px_#E30613] border-white';
                 cardVisual = `
-                    <div class="w-20 h-28 bg-black border-4 border-gray-600 rounded-lg flex items-center justify-center shadow-lg relative overflow-hidden">
-                        <div class="absolute w-full h-full flex items-center justify-center opacity-20">
-                            <span class="pixel-font text-[#E30613] text-4xl">A</span>
+                    <div class="w-20 h-28 bg-[#E30613] border-4 rounded-sm flex items-center justify-center relative overflow-hidden transition-all duration-500 ${glowClass}">
+                        <div class="absolute w-full h-full flex items-center justify-center opacity-40">
+                            <span class="pixel-font text-white text-4xl">A</span>
                         </div>
-                        ${p.isAllIn ? '<span class="text-[#E30613] font-bold text-[10px] absolute top-2 blink">ALL IN</span>' : '✅'}
+                        ${p.isAllIn ? '<span class="text-white font-bold text-[10px] absolute top-2 blink">ALL IN</span>' : ''}
+                        <div class="absolute inset-0 bg-white/10 animate-pulse"></div>
                     </div>`;
             }
         } else {
-            cardVisual = `<div class="w-20 h-28 border-2 border-dashed border-gray-700 rounded-lg flex items-center justify-center text-gray-700 pixel-font text-[10px]">...</div>`;
+            cardVisual = `<div class="w-20 h-28 border-2 border-dashed border-gray-700 rounded-sm flex items-center justify-center text-gray-700 pixel-font text-[10px]">...</div>`;
         }
 
         playerDiv.innerHTML = `
@@ -165,6 +187,11 @@ function send(data) {
 
 function sendVote(val) {
     if (isAllInMode && allInCooldown > 0) return alert(`COOLDOWN ACTIVE: ${Math.ceil(allInCooldown / 60)}m`);
+
+    // Check if already voted
+    if (lastRoomState && myId && lastRoomState.participants[myId] && lastRoomState.participants[myId].vote) {
+        return; // Prevent changing vote
+    }
 
     send({ type: "vote", vote: val, isAllIn: isAllInMode });
 
@@ -234,12 +261,36 @@ function triggerCleanSweep(val) {
     }, 3000);
 }
 
+window.onload = () => {
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get('room');
+    if (room) {
+        // Remove # if present since the UI now has it static
+        document.getElementById('roomIdInput').value = room.replace('#', '');
+    }
+};
+
+function copyInvite() {
+    const roomId = document.getElementById('header-room-id').innerText;
+    const url = `${window.location.origin}/?room=${roomId.replace('#', '')}`;
+    navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('button[onclick="copyInvite()"]');
+        const oldText = btn.innerText;
+        btn.innerText = "COPIED!";
+        setTimeout(() => btn.innerText = oldText, 2000);
+    }).catch(err => {
+        alert("COULD NOT COPY LINK");
+    });
+}
+
 window.addEventListener('keydown', (e) => {
     if (document.getElementById('game-screen').classList.contains('hidden')) return;
     if (e.key >= '1' && e.key <= '9') {
-        const values = ["1", "2", "3", "5", "8", "13", "21", "34", "55"];
-        const val = values[parseInt(e.key) - 1];
+        const val = fibonacci[parseInt(e.key)];
         if (val) sendVote(val);
+    }
+    if (e.key === '0') {
+        sendVote(fibonacci[0]);
     }
     if (e.key === ' ' && isHost) { sendReveal(); e.preventDefault(); }
     if (e.key === 'Escape' && isHost) { sendReset(); }
