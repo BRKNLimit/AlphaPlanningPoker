@@ -73,7 +73,6 @@ function startSession(roomId) {
         if (msg.type === "welcome") { myId = msg.yourId; return; }
         if (msg.type === "allInSlam") { triggerScreenShake(); return; }
         if (msg.type === "reaction") { spawnReaction(msg.emoji); return; }
-        if (msg.type === "cleanSweep") { triggerCleanSweep(msg.vote); return; }
 
         // Default Room Update
         if (msg.id) {
@@ -92,11 +91,6 @@ function startSession(roomId) {
 
 function updateUI(room) {
     document.getElementById('header-room-id').innerText = room.id;
-    
-    // Only hide banner if not revealed (new round)
-    if (!room.isRevealed) {
-        document.getElementById('clean-sweep-banner').classList.add('hidden');
-    }
     
     const table = document.getElementById('table-area');
     table.innerHTML = '';
@@ -249,16 +243,6 @@ function spawnReaction(emoji) {
     el.style.left = Math.random() * 80 + 10 + 'vw';
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 3000);
-}
-
-function triggerCleanSweep(val) {
-    const banner = document.getElementById('clean-sweep-banner');
-    banner.classList.remove('hidden');
-    document.body.classList.add('consensus-pulse');
-    triggerScreenShake();
-    setTimeout(() => {
-        document.body.classList.remove('consensus-pulse');
-    }, 3000);
 }
 
 window.onload = () => {
